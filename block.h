@@ -17,11 +17,29 @@ inline std::vector<block_t> create_blocks()
 {
 	std::vector<block_t> blocks;
 	block_t temp;
+
 	temp.center = vec3(0, 0, 0);
 	blocks.push_back(temp);
-
-	temp.center = vec3(1.5, 1, 1);
+	temp.center = vec3(1, 0, 0);
 	blocks.push_back(temp);
+	temp.center = vec3(2, 0, 0);
+	blocks.push_back(temp);
+	temp.center = vec3(3, 0, 0);
+	blocks.push_back(temp);
+
+	temp.center = vec3(3, 1, 0);
+	blocks.push_back(temp);
+	temp.center = vec3(3, 2, 0);
+	blocks.push_back(temp);
+	temp.center = vec3(3, 3, 0);
+	blocks.push_back(temp);
+
+	temp.center = vec3(3, 3, 1);
+	blocks.push_back(temp);
+	temp.center = vec3(3, 3, 2);
+	blocks.push_back(temp);
+//	temp.center = vec3(3, 3, 3);
+//	blocks.push_back(temp);
 	
 	return blocks;
 }
@@ -29,9 +47,9 @@ inline std::vector<block_t> create_blocks()
 inline void block_t::update(float t)
 {
 	
-	model_matrix = mat4::translate(center)  //rotation around sun
-		* mat4::rotate(vec3(0, 0, 0), 0) // self rotation
-		* mat4::scale(size, size, size); //size
+	model_matrix = mat4::translate(center)	// rotation around sun
+		* mat4::rotate(vec3(0, 0, 0), 0)	// self rotation
+		* mat4::scale(size, size, size);	// size
 }
 
 #endif
