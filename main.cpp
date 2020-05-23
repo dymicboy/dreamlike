@@ -1,424 +1,400 @@
-#include "cgmath.h"		// slee's Simple Math Library.
-#include "cgut.h"		// slee's OpenGL Utility.
-#include "trackball.h"	// Virtual Trackball.
-#include "planet.h"
-#include "animation.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "cgmath.h"		// slee's simple math library
+#include "cgut.h"		// slee's OpenGL utility
+#include "block.h"
 
 //*************************************
-// Global Constants.
-static const char* window_name = "2014314636 Yul's Planets";
-static const char* vert_shader_path = "../bin/shaders/planet.vert";
-static const char* frag_shader_path = "../bin/shaders/planet.frag";
+// global constants
+static const char*	window_name = "team dreamlike";
+static const char*	vert_shader_path = "shaders/dreamlike.vert";
+static const char*	frag_shader_path = "shaders/dreamlike.frag";
+
+GLuint	block_vertex_array = 0;	// ID holder for vertex array object
+auto	blocks = std::move(create_blocks());
+
+float	t = 0.0f;						
+
+bool ctrl_pressed = 0;
+bool shift_pressed = 0;
+int	wire_mode = 0;
+
+bool	m_tracking = false;
+bool	p_tracking = false;
+bool	z_tracking = false;
+
+vec2	m0;				// the last mouse position
+vec3	eye0, at0, up0; // the last eye at up position
+
 
 //*************************************
-// Common Structures.
-vec3 default_eye = vec3(400, 0, 200);
-vec3 default_at = vec3(0, 0, 0);
-vec3 default_up = vec3(0, 0, 1);
+// common structures
 struct camera
 {
-	vec3	eye = default_eye;
-	vec3	at = default_at;
-	vec3	up = default_up;
-	mat4	view_matrix = mat4::look_at(eye, at, up);
+	vec3	eye = vec3( 20,20,float(sqrt(800)) );
+	vec3	at = vec3( 0, 0, 0 );
+	vec3	up = vec3( 0, 0, 1 );
+	mat4	view_matrix = mat4::look_at( eye, at, up );
 
-	float	fovy = PI / 2.0f; // must be in radian
+	float	fovy = PI/4.0f; // must be in radian
 	float	aspect;
-	float	dnear = 100.0f;
-	float	dfar = -100.0f;
-	mat4	projection_matrix;
+	float	dnear = 1.0f;
+	float	dfar = 1000.0f;
+	mat4	projection_matrix =
+	{	1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
 };
 
 //*************************************
-// Window Objects.
-GLFWwindow* window = nullptr;
-ivec2		window_size = ivec2(1280, 720);	// Initial Window Size.
-//cg_default_window_size(); 
+// window objects
+GLFWwindow*	window = nullptr;
+ivec2		window_size = cg_default_window_size(); // initial window size
 
 //*************************************
-// OpenGL Objects.
-GLuint	program = 0;		// ID Holder for GPU Program.
-GLuint	vertex_array = 0;	// ID Holder for Vertex Array Object.
+// OpenGL objects
+GLuint	program	= 0;	// ID holder for GPU program
 
 //*************************************
-// Global Variables.
-int		frame = 0;			// Index of Rendering Frames.
-float	common_time = 0.0f;	// Save Common Time for Rendering.
-#ifndef GL_ES_VERSION_2_0
-bool	b_wireframe = false;
-#endif
-bool	b_shift = false;
-bool	b_ctrl = false;
-bool	b_tracking = false;
-bool	b_zooming = false;
-bool	b_moving = false;
+// global variables
+int		frame = 0;				// index of rendering frames
 
 //*************************************
-// Scene Objects.
+// scene objects
+mesh*		pMesh = nullptr;
 camera		cam;
-trackball	tb;
 
-//*************************************
-// Holder of Vertices and Indices of a Unit Circle.
-std::vector<vertex>	unit_planet_vertices;		// Host-side Vertices.
-std::vector<vertex>	unit_satellite_vertices;	// Host-side Vertices.
-std::vector<vertex>	unit_total_vertices;		// Host-side Vertices.
+// utility function
+vec2 cursor_to_ndc(dvec2 cursor, ivec2 window_size)
+{
+	// normalize window pos to [0,1]^2
+	vec2 npos = vec2(float(cursor.x) / float(window_size.x - 1),
+		float(cursor.y) / float(window_size.y - 1));
+
+	// normalize window pos to [-1,1]^2 with vertical flipping
+	// vertical flipping: window coordinate system defines y from
+	// top to bottom, while the trackball from bottom to top
+	return vec2(npos.x * 2.0f - 1.0f, 1.0f - npos.y * 2.0f);
+}
+
+// Orthogonal Projection Function.
+mat4 ortho( float fovy, float aspect, float dnear, float dfar )
+{
+	float t = 1 / tan(fovy / 2),	b = -t;
+	float l = -t * aspect,			r = -l;
+	float n = dnear,				f = dfar;
+	mat4 matrix;
+	//matrix->_11 = 2 / (r - l); matrix->_12 = 0; matrix->_13 = 0; matrix->_14 = (l + r) / (l - r);
+	//matrix->_21 = 0; matrix->_22 = 2 / (t - b); matrix->_23 = 0; matrix->_24 = (b + t) / (b - t);
+	//matrix->_31 = 0; matrix->_32 = 0; matrix->_33 = 2 / (n - f); matrix->_34 = (n + f) / (n - f);
+	//matrix->_41 = 0; matrix->_42 = 0; matrix->_43 = 0; matrix->_44 = 1;
+	matrix._11 = 2 / (r - l); matrix._12 = 0; matrix._13 = 0; matrix._14 = (l + r) / (l - r);
+	matrix._21 = 0; matrix._22 = 2 / (t - b); matrix._23 = 0; matrix._24 = (b + t) / (b - t);
+	matrix._31 = 0; matrix._32 = 0; matrix._33 = 2 / (n - f); matrix._34 = (n + f) / (n - f);
+	matrix._41 = 0; matrix._42 = 0; matrix._43 = 0; matrix._44 = 1;
+	return matrix;
+}
 
 //*************************************
 void update()
 {
-	// Update Global Simulation Parameter
-	common_time = float(glfwGetTime()) * 0.4f;
 
-	// Tricky Aspect Correction Matrix for Non-Square Window.
-	float aspect = window_size.x / float(window_size.y);
-	mat4 aspect_matrix =
-	{
-		min(1 / aspect,1.0f), 0, 0, 0,
-		0, min(aspect,1.0f),   0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	};
+	t = float(glfwGetTime());
 
-	// Update Projection Matrix.
-	cam.aspect = window_size.x / float(window_size.y);
-	cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect, cam.dnear, cam.dfar);
+	// update projection matrix
+	cam.aspect = window_size.x/float(window_size.y);
+	//cam.projection_matrix = mat4::perspective( cam.fovy, cam.aspect, cam.dnear, cam.dfar );
+	cam.projection_matrix = ortho( cam.fovy, cam.aspect, cam.dnear, cam.dfar );
 
-	// Update Uniform Variables in Vertex/Fragment Shaders.
+	// build the model matrix for oscillating scale
+	float t = float(glfwGetTime());
+	float scale	= 1;
+	mat4 model_matrix = mat4::scale( scale, scale, scale );
+
+	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
-	uloc = glGetUniformLocation(program, "view_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.view_matrix);
-	uloc = glGetUniformLocation(program, "projection_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, cam.projection_matrix);
-	uloc = glGetUniformLocation(program, "aspect_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, aspect_matrix);
+	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
+	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
+	
 }
 
 void render()
 {
-	//GLint uloc;
-	// Clear Screen (with Background Color) and Clear Depth Buffer.
+	// clear screen (with background color) and clear depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Notify GL that we use our own Program.
+	// notify GL that we use our own program
 	glUseProgram(program);
 
-	// Bind Vertex Array.
-	glBindVertexArray(vertex_array);
+	// bind vertex array object
+	glBindVertexArray(block_vertex_array);
 
-	for (int i = 0; i < PLANET_COUNT; i++)
+	// render circles: trigger shader program to process vertex data
+	for (auto& s : blocks)
 	{
-		// Update the Uniform Model Matrix and Render.
-		planet_list[i].update(common_time);
-		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, planet_list[i].model_matrix);
-
-		// Pass Variables to '.vert' File.
-		glDrawElements(GL_TRIANGLES, 3 * (NUM_TESS + 1 + 22) * (NUM_TESS + 1), GL_UNSIGNED_INT, nullptr);
-	}
-	for (int i = 0; i < SATELLITE_COUNT; i++)
-	{
-		int planet_enum = satellite_list[i].planet_enum;
-		// Update the Uniform Model Matrix and Render.
-		satellite_list[i].update(common_time, planet_list[planet_enum].center);
-		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, satellite_list[i].model_matrix);
-
-		// Pass Variables to '.vert' File.
-		glDrawElements(GL_TRIANGLES, 3 * (NUM_TESS + 1) * (NUM_TESS + 1), GL_UNSIGNED_INT, nullptr);
+		s.update(t);
+		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+		glDrawElements(GL_TRIANGLES, 101 * 100 * 6, GL_UNSIGNED_INT, nullptr);
 	}
 
-	// Swap Front and Back Buffers, and Display to Screen.
+	// swap front and back buffers, and display to screen
 	glfwSwapBuffers(window);
 }
 
-void reshape(GLFWwindow* window, int width, int height)
+void reshape( GLFWwindow* window, int width, int height )
 {
-	// Set Current Viewport in Pixels (win_x, win_y, win_width, win_height)
-	// Viewport: the Window Area that are affected by Rendering 
-	window_size = ivec2(width, height);
-	glViewport(0, 0, width, height);
+	// set current viewport in pixels (win_x, win_y, win_width, win_height)
+	// viewport: the window area that are affected by rendering 
+	window_size = ivec2(width,height);
+	glViewport( 0, 0, width, height );
 }
 
 void print_help()
 {
-	printf("[help]\n");
-	printf("- press ESC or 'q' to terminate the program\n");
-	printf("- press F1 or 'h' to see help\n");
-	printf("- press 'w' to toggle wireframe\n");
-	printf("- press Home to reset camera\n");
-	printf("- press Pause to pause the simulation\n");
-	printf("\n");
-	printf("+ Alpha!!\n");
-	printf("- None... Only Moon\n");
-	printf("\n");
+	printf( "[help]\n" );
+	printf( "- press ESC or 'q' to terminate the program\n" );
+	printf( "- press F1 or 'h' to see help\n" );
+	printf( "- press Home to reset camera\n" );
+	printf( "\n" );
 }
 
-void update_vertex_buffer(const std::vector<vertex>& vertices)
+void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
-	static GLuint vertex_buffer = 0;	// ID Holder for Vertex Buffer.
-	static GLuint index_buffer = 0;		// ID Holder for Index Buffer.
-
-	// Clear and Create New Buffers.
-	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
-	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
-
-	// Check Exceptions.
-	if (vertices.empty()) { printf("[error] vertices is empty.\n"); return; }
-
-	// Create Buffers.
-	std::vector<uint> indices;
-	for (uint n = 0; n < PLANET_COUNT; n++)
-	{
-		uint planet_n = (3 * (NUM_TESS + 1) * (NUM_TESS + 1)) * n;
-		planet_n = 0;
-		printf("%u\n", planet_n);
-		// Circle through XY-Frame.
-		for (uint x_k = 0; x_k < NUM_TESS; x_k++)
-		{
-			uint left = x_k * (NUM_TESS / 2 + 1 + 11), right = (x_k + 1) * (NUM_TESS / 2 + 1 + 11);
-			// Circle through Lower Edge.
-			for (uint z_k = 0; z_k < NUM_TESS / 4; z_k++)
-			{
-				indices.push_back(planet_n + left + z_k);
-				indices.push_back(planet_n + right + z_k);
-				indices.push_back(planet_n + right + z_k + 1);
-				indices.push_back(planet_n + left + z_k + 1);
-				indices.push_back(planet_n + left + z_k);
-				indices.push_back(planet_n + right + z_k + 1);
-			}
-			// Pilar;
-			for (uint z_k = NUM_TESS / 4; z_k < NUM_TESS / 4 + 11; z_k++)
-			{
-				indices.push_back(planet_n + left + z_k);
-				indices.push_back(planet_n + right + z_k);
-				indices.push_back(planet_n + right + z_k + 1);
-				indices.push_back(planet_n + left + z_k + 1);
-				indices.push_back(planet_n + left + z_k);
-				indices.push_back(planet_n + right + z_k + 1);
-			}
-			// Circle through Lower Edge.
-			for (uint z_k = NUM_TESS / 4 + 11; z_k < NUM_TESS / 2 + 11; z_k++)
-			{
-				indices.push_back(planet_n + left + z_k);
-				indices.push_back(planet_n + right + z_k);
-				indices.push_back(planet_n + right + z_k + 1);
-				indices.push_back(planet_n + left + z_k + 1);
-				indices.push_back(planet_n + left + z_k);
-				indices.push_back(planet_n + right + z_k + 1);
-			}
-		}
-	}
-
-	// Generation of Vertex Buffer: Use Vertices as it is.
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
-
-	// Geneation of Index Buffer.
-	glGenBuffers(1, &index_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
-
-	// Generate Vertex Array Object, which is Mandatory for OpenGL 3.3 and Higher.
-	if (vertex_array) glDeleteVertexArrays(1, &vertex_array);
-	vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
-	if (!vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return; }
-}
-
-void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-	if (action == GLFW_PRESS)
+	if(action==GLFW_PRESS)
 	{
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
-		else if (key == GLFW_KEY_W)
-		{
-			b_wireframe = !b_wireframe;
-			glPolygonMode(GL_FRONT_AND_BACK, b_wireframe ? GL_LINE : GL_FILL);
-			printf("> using %s mode\n", b_wireframe ? "wireframe" : "solid");
+		else if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)		ctrl_pressed = 1;
+		else if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)		shift_pressed = 1;
+		else if (key == GLFW_KEY_HOME)				cam = camera();
+		else if (key == GLFW_KEY_W) {
+			wire_mode = !wire_mode;
+			glPolygonMode(GL_FRONT_AND_BACK, wire_mode ? GL_LINE : GL_FILL);
+			printf("> using %s mode\n", wire_mode ? "wireframe" : "solid");
 		}
-		else if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)
-		{
-			b_shift = true;
-		}
-		else if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)
-		{
-			b_ctrl = true;
-		}
-		else if (key == GLFW_KEY_HOME)
-		{
-			cam.eye = default_eye;
-			cam.at = default_at;
-			cam.up = default_up;
-			cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
-		}
-		else if (key == GLFW_KEY_PAUSE)
-			b_pause = !b_pause;
 	}
-	else
-	{
-		b_shift = false;
-		b_ctrl = false;
+	else if (action == GLFW_RELEASE) {
+		if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)		ctrl_pressed = 0;
+		else if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)		shift_pressed = 0;
 	}
 }
 
-void mouse(GLFWwindow* window, int button, int action, int mods)
+void mouse( GLFWwindow* window, int button, int action, int mods )
 {
-	if (button == GLFW_MOUSE_BUTTON_MIDDLE)
+	if(button==GLFW_MOUSE_BUTTON_MIDDLE || (button==GLFW_MOUSE_BUTTON_LEFT && ctrl_pressed))
 	{
+		//panning
+		dvec2 pos; glfwGetCursorPos(window,&pos.x,&pos.y);
+		vec2 npos = cursor_to_ndc( pos, window_size );
+		if (action == GLFW_PRESS) {
+			p_tracking = true;			// enable trackball tracking
+			eye0 = cam.eye;
+			at0 = cam.at;
+			up0 = cam.up;
+			m0 = npos;
+		}
+		else if (action == GLFW_RELEASE) {
+			p_tracking = false;			// enable trackball tracking
+		}
+	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT || (button == GLFW_MOUSE_BUTTON_LEFT && shift_pressed))
+	{
+		//zooming
 		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
-		vec2 temp = vec2(float(pos.x), float(pos.y));
-		if (action == GLFW_PRESS)			tb.move_begin(temp);
-		else if (action == GLFW_RELEASE)	tb.move_end();
-	}
-	else if (b_ctrl)
-	{
-		if (button == GLFW_MOUSE_BUTTON_LEFT)
-		{
-			dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
-			vec2 temp = vec2(float(pos.x), float(pos.y));
-			if (action == GLFW_PRESS)			tb.move_begin(temp);
-			else if (action == GLFW_RELEASE)	tb.move_end();
+		vec2 npos = cursor_to_ndc(pos, window_size);
+		if (action == GLFW_PRESS) {
+			z_tracking = true;
+			eye0 = cam.eye;
+			at0 = cam.at;
+			up0 = cam.up;
+			m0 = npos;
 		}
-		else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-		{
-			dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
-			if (action == GLFW_PRESS)			tb.zoom_begin(float(pos.y));
-			else if (action == GLFW_RELEASE)	tb.zoom_end();
-		}
-	}
-	else if (b_shift)
-	{
-		if (button == GLFW_MOUSE_BUTTON_LEFT || button == GLFW_MOUSE_BUTTON_RIGHT)
-		{
-			dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
-			if (action == GLFW_PRESS)			tb.zoom_begin(float(pos.y));
-			else if (action == GLFW_RELEASE)	tb.zoom_end();
+		else if (action == GLFW_RELEASE) {
+			z_tracking = false;	
 		}
 	}
 	else if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
+		//rotating
 		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
-		vec2 temp = vec2(float(pos.x), float(pos.y));
-		if (action == GLFW_PRESS)			tb.track_begin(temp);
-		else if (action == GLFW_RELEASE)
-		{
-			if (tb.is_tracking())		tb.track_end();
-			else if (tb.is_zooming())	tb.zoom_end();
-			else if (tb.is_moving())	tb.move_end();
+		vec2 npos = cursor_to_ndc(pos, window_size);
+		if (action == GLFW_PRESS) {
+			m_tracking = true;
+			eye0 = cam.eye;
+			at0 = cam.at;
+			up0 = cam.up;
+			m0 = npos;
+			printf("%f, %f, %f\n", cam.eye.x, cam.eye.y, cam.eye.z);
 		}
-	}
-	else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-	{
-		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
-		if (action == GLFW_PRESS)			tb.zoom_begin(float(pos.y));
-		else if (action == GLFW_RELEASE)
-		{
-			if (tb.is_tracking())		tb.track_end();
-			else if (tb.is_zooming())	tb.zoom_end();
-			else if (tb.is_moving())	tb.move_end();
+		else if (action == GLFW_RELEASE) {
+			m_tracking = false;
 		}
 	}
 }
 
-void motion(GLFWwindow* window, double x, double y)
+void motion( GLFWwindow* window, double x, double y )
 {
-	if (!tb.is_tracking() && !tb.is_zooming() && !tb.is_moving()) return;
-	else if (tb.is_tracking())
-	{
-		vec2 temp = tb.track_update(vec2(float(x), float(y)));
-		vec3 u_frame;
-		vec3 v_frame;
-		vec3 n_frame;
-		float distance = length(cam.eye - cam.at);
-
-		u_frame = vec3(cam.view_matrix._11, cam.view_matrix._12, cam.view_matrix._13);
-		n_frame = vec3(cam.view_matrix._31, cam.view_matrix._32, cam.view_matrix._33);
-		cam.eye = cam.at + (u_frame * sin(temp.x/100) + n_frame * cos(temp.x/100)) * distance;
-		cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
-
-		v_frame = vec3(cam.view_matrix._21, cam.view_matrix._22, cam.view_matrix._23);
-		n_frame = vec3(cam.view_matrix._31, cam.view_matrix._32, cam.view_matrix._33);
-		cam.eye = cam.at + (v_frame * sin(-temp.y/100) + n_frame * cos(-temp.y/100)) * distance;
+	if (z_tracking) {
+		//zooming
+		vec2 npos = cursor_to_ndc(dvec2(x, y), window_size);
+		float p = (npos.y - m0.y);
+		if ((p < 0.0001f && p >0)  || (p<0 && p>-0.0001f) ) return;		// ignore subtle movement
+		if (p > 1.0f || p < -1.0f) return;
+		mat4 tmp = mat4::look_at(eye0, at0, up0);
+		cam.eye = eye0 + vec3(tmp._31, tmp._32, tmp._33) * p * 10;
 		cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
 	}
-	else if (tb.is_zooming())
-	{
-		vec3 n_frame = vec3(cam.view_matrix._31, cam.view_matrix._32, cam.view_matrix._33);
-		float distance = length(cam.eye - cam.at) / 50;
-		float diff = tb.zoom_update(float(y));
+	else if(m_tracking) {
+		// trackball
+		vec2 npos = cursor_to_ndc(dvec2(x, y), window_size);
+		vec2 temp = (npos - m0) * -20;
+		float distance = length(eye0 - at0);
+		float yflag = 0;
+		if (temp.y >= 0) yflag = 1; else yflag = -1;
 
-		if (diff < 0.0f)
-			cam.eye += n_frame * distance;
-		else if (diff > 0.0f)
-			cam.eye -= n_frame * distance;
+		float theta = atan(temp.x / temp.y);
+		float ztheta = atan( yflag*length(temp) / distance);
+
+		mat4 tmp = mat4::look_at(eye0, at0, up0);
+		vec3 u_frame = vec3(tmp._11, tmp._12, tmp._13);
+		vec3 v_frame = vec3(tmp._21, tmp._22, tmp._23);
+		vec3 n_frame = vec3(tmp._31, tmp._32, tmp._33);
+		cam.eye = at0 + (
+			u_frame * sin(ztheta) * sin(theta)
+			+ v_frame * sin(ztheta) * cos(theta)
+			+ n_frame * cos(ztheta)
+			) * distance;
 		cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
+
 	}
-	else if (tb.is_moving())
-	{
-		vec2 temp = tb.move_update(vec2(float(x), float(y)));
-		float distance = length(cam.eye - cam.at) / 500;
-		vec3 u_frame = vec3(cam.view_matrix._11, cam.view_matrix._12, cam.view_matrix._13);
-		vec3 v_frame = vec3(cam.view_matrix._21, cam.view_matrix._22, cam.view_matrix._23);
-		cam.eye += (u_frame * -temp.x + v_frame * temp.y) * distance;
-		cam.at += (u_frame * -temp.x * 2.0f + v_frame * temp.y) * distance;
+	else if (p_tracking) {
+		//panning
+		vec2 npos = cursor_to_ndc(dvec2(x, y), window_size);
+		float px = (npos.x - m0.x)*20;					
+		float py = (npos.y - m0.y)*20;					
+		if (length(vec2(px,py)) < 0.0001f) return;		// ignore subtle movement
+		mat4 tmp = mat4::look_at(eye0, at0, up0);
+		cam.eye = eye0
+			+ vec3(tmp._11, tmp._12, tmp._13) * px
+			+ vec3(tmp._21, tmp._22, tmp._23) * py;
+
+		cam.at = at0
+			+ vec3(tmp._11, tmp._12, tmp._13) * px
+			+ vec3(tmp._21, tmp._22, tmp._23) * py;
+
 		cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
+
 	}
+
 }
+
+
+void create_block_vertex_array()
+{
+	std::vector<uint> indices;
+	std::vector<vertex> vertices;
+
+	//create vertices
+	vertices.push_back({ vec3(-0.5,-0.5,-0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+	vertices.push_back({ vec3(0.5,-0.5,-0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+	vertices.push_back({ vec3(0.5,0.5,-0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+	vertices.push_back({ vec3(-0.5,0.5,-0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+
+	vertices.push_back({ vec3(-0.5,-0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+	vertices.push_back({ vec3(0.5,-0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+	vertices.push_back({ vec3(0.5,0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(-0.5,0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+
+	//create indices
+	//bottom
+	indices.push_back(0); indices.push_back(2); indices.push_back(1);
+	indices.push_back(0); indices.push_back(3); indices.push_back(2);
+	//top
+	indices.push_back(4); indices.push_back(5); indices.push_back(6);
+	indices.push_back(4); indices.push_back(6); indices.push_back(7);
+	//front
+	indices.push_back(5); indices.push_back(1); indices.push_back(2);
+	indices.push_back(5); indices.push_back(2); indices.push_back(6);
+	//left
+	indices.push_back(4); indices.push_back(0); indices.push_back(5);
+	indices.push_back(5); indices.push_back(0); indices.push_back(1);
+	//right
+	indices.push_back(6); indices.push_back(2); indices.push_back(3);
+	indices.push_back(6); indices.push_back(3); indices.push_back(7);
+	//back
+	indices.push_back(7); indices.push_back(3); indices.push_back(0);
+	indices.push_back(7); indices.push_back(0); indices.push_back(4);
+
+	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
+	static GLuint index_buffer = 0;		// ID holder for index buffer
+
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
+
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+
+	// geneation of index buffer
+	glGenBuffers(1, &index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (block_vertex_array) glDeleteVertexArrays(1, &block_vertex_array);
+	block_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
+}
+
 
 bool user_init()
 {
-	// Log Hotkeys.
+	// log hotkeys
 	print_help();
 
-	// Init GL States.
-	glClearColor(39 / 255.0f, 40 / 255.0f, 34 / 255.0f, 1.0f);	// Set Clear Color.
-	glEnable(GL_CULL_FACE);										// Turn on Backface Culling.
-	glEnable(GL_DEPTH_TEST);									// Turn on Depth Tests.
+	// init GL states
+	glClearColor( 39/255.0f, 40/255.0f, 34/255.0f, 1.0f );	// set clear color
+	glEnable( GL_CULL_FACE );								// turn on backface culling
+	glEnable( GL_DEPTH_TEST );								// turn on depth tests
 
-	create_planet_buffer();
-	create_satellite_buffer();
-	load_planet_textures();
-	load_satellite_textures();
-
-	unit_planet_vertices = std::move(create_planet_vertices());
-	unit_satellite_vertices = std::move(create_satellite_vertices());
-	unit_total_vertices.insert(std::end(unit_total_vertices),
-		std::begin(unit_planet_vertices), std::end(unit_planet_vertices));
-	unit_total_vertices.insert(std::end(unit_total_vertices),
-		std::begin(unit_satellite_vertices), std::end(unit_satellite_vertices));
-	update_vertex_buffer(unit_total_vertices);
+	// load the mesh
+	create_block_vertex_array();
 
 	return true;
 }
+
+
 
 void user_finalize()
 {
 }
 
-int main(int argc, char* argv[])
+int main( int argc, char* argv[] )
 {
-	// Create Window and Initialize OpenGL Extensions.
-	if (!(window = cg_create_window(window_name, window_size.x, window_size.y))) { glfwTerminate(); return 1; }
-	if (!cg_init_extensions(window)) { glfwTerminate(); return 1; }	// Version and Extensions.
+	// create window and initialize OpenGL extensions
+	if(!(window = cg_create_window( window_name, window_size.x, window_size.y ))){ glfwTerminate(); return 1; }
+	if(!cg_init_extensions( window )){ glfwTerminate(); return 1; }	// version and extensions
 
-	// Initializations and Validations.
-	if (!(program = cg_create_program(vert_shader_path, frag_shader_path))) { glfwTerminate(); return 1; }	// Create and Compile Shaders/Program.
-	if (!user_init()) { printf("Failed to user_init()\n"); glfwTerminate(); return 1; }						// User Initialization.
+	// initializations and validations
+	if(!(program=cg_create_program( vert_shader_path, frag_shader_path ))){ glfwTerminate(); return 1; }	// create and compile shaders/program
+	if(!user_init()){ printf( "Failed to user_init()\n" ); glfwTerminate(); return 1; }					// user initialization
 
-	// Register Event Callbacks.
-	glfwSetWindowSizeCallback(window, reshape);	// Callback for Window Resizing Events.
-	glfwSetKeyCallback(window, keyboard);			// Callback for Keyboard Events.
-	glfwSetMouseButtonCallback(window, mouse);	// Callback for Mouse Click Inputs.
-	glfwSetCursorPosCallback(window, motion);		// Callback for Mouse Movement.
+	// register event callbacks
+	glfwSetWindowSizeCallback( window, reshape );	// callback for window resizing events
+    glfwSetKeyCallback( window, keyboard );			// callback for keyboard events
+	glfwSetMouseButtonCallback( window, mouse );	// callback for mouse click inputs
+	glfwSetCursorPosCallback( window, motion );		// callback for mouse movement
 
-	// Enters Rendering/Event Loop.
-	for (frame = 0; !glfwWindowShouldClose(window); frame++)
+	// enters rendering/event loop
+	for( frame=0; !glfwWindowShouldClose(window); frame++ )
 	{
-		glfwPollEvents();	// Polling and Processing of Events.
-		update();			// Per-Frame Update.
-		render();			// Per-Frame Render.
+		glfwPollEvents();	// polling and processing of events
+		update();			// per-frame update
+		render();			// per-frame render
 	}
 
-	// Normal Termination.
+	// normal termination
 	user_finalize();
 	cg_destroy_window(window);
 
