@@ -11,6 +11,8 @@ static const char*	frag_shader_path = "shaders/dreamlike.frag";
 GLuint	block_vertex_array = 0;	// ID holder for vertex array object
 auto	blocks = std::move(create_blocks());
 
+float	current_frame_time;
+float	last_frame_time;
 float	t = 0.0f;						
 
 bool ctrl_pressed = 0;
@@ -29,7 +31,7 @@ vec3	eye0, at0, up0; // the last eye at up position
 // common structures
 struct camera
 {
-	vec3	eye = vec3( 20,20,float(sqrt(800)) );
+	vec3	eye = vec3(200,200,200 );
 	vec3	at = vec3( 0, 0, 0 );
 	vec3	up = vec3( 0, 0, 1 );
 	mat4	view_matrix = mat4::look_at( eye, at, up );
@@ -88,10 +90,10 @@ mat4 ortho( float fovy, float aspect, float dnear, float dfar )
 	//matrix->_21 = 0; matrix->_22 = 2 / (t - b); matrix->_23 = 0; matrix->_24 = (b + t) / (b - t);
 	//matrix->_31 = 0; matrix->_32 = 0; matrix->_33 = 2 / (n - f); matrix->_34 = (n + f) / (n - f);
 	//matrix->_41 = 0; matrix->_42 = 0; matrix->_43 = 0; matrix->_44 = 1;
-	matrix._11 = 2 / (r - l); matrix._12 = 0; matrix._13 = 0; matrix._14 = (l + r) / (l - r);
-	matrix._21 = 0; matrix._22 = 2 / (t - b); matrix._23 = 0; matrix._24 = (b + t) / (b - t);
-	matrix._31 = 0; matrix._32 = 0; matrix._33 = 2 / (n - f); matrix._34 = (n + f) / (n - f);
-	matrix._41 = 0; matrix._42 = 0; matrix._43 = 0; matrix._44 = 1;
+	matrix._11 = 2 / (r - l);	matrix._12 = 0;				matrix._13 = 0;				matrix._14 = (l + r) / (l - r);
+	matrix._21 = 0;				matrix._22 = 2 / (t - b);	matrix._23 = 0;				matrix._24 = (b + t) / (b - t);
+	matrix._31 = 0;				matrix._32 = 0;				matrix._33 = 2 / (n - f);	matrix._34 = (n + f) / (n - f);
+	matrix._41 = 0;				matrix._42 = 0;				matrix._43 = 0;				matrix._44 = 1;
 	return matrix;
 }
 
@@ -99,7 +101,17 @@ mat4 ortho( float fovy, float aspect, float dnear, float dfar )
 void update()
 {
 
-	t = float(glfwGetTime());
+	// update global simulation parameter
+	if (current_frame_time) {
+		current_frame_time = float(glfwGetTime());
+		t = current_frame_time - last_frame_time;
+		if (t > 0.005f) t = 0.005f;
+		last_frame_time = current_frame_time;
+	}
+	else {
+		current_frame_time = float(glfwGetTime());
+		last_frame_time = current_frame_time;
+	}
 
 	// update projection matrix
 	cam.aspect = window_size.x/float(window_size.y);
@@ -247,7 +259,7 @@ void motion( GLFWwindow* window, double x, double y )
 	else if(m_tracking) {
 		// trackball
 		vec2 npos = cursor_to_ndc(dvec2(x, y), window_size);
-		vec2 temp = (npos - m0) * -20;
+		vec2 temp = (npos - m0) *-200;
 		float distance = length(eye0 - at0);
 		float yflag = 0;
 		if (temp.y >= 0) yflag = 1; else yflag = -1;

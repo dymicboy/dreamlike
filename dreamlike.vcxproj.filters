@@ -31,10 +31,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\shaders\dreamlike.frag">
+    <None Include="dreamlike.frag">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="bin\shaders\dreamlike.vert">
+    <None Include="dreamlike.vert">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>
