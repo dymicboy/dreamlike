@@ -16,67 +16,35 @@ struct block_t
 	void	update(float t);
 };
 
+inline block_t init_block( vec3 _center, vec3 _rotate_center, bool _rotate_flag = false)
+{
+	block_t temp;
+	float dist = distance(_center, _rotate_center);
+
+	temp.center = _center;
+	temp.rotate_center = _rotate_center;
+	if (dist == 0.0f)	temp.current_theta = 0.0f;
+	else				temp.current_theta = atan((_center - _rotate_center).y / (_center - _rotate_center).x);
+	if (_rotate_flag)	temp.target_theta = temp.current_theta + PI;
+	else				temp.target_theta = temp.current_theta;
+
+	return temp;
+}
 
 inline std::vector<block_t> create_blocks()
 {
 	std::vector<block_t> blocks;
-	block_t temp;
 
-	temp.center = vec3(0, 0, 0);
-	temp.rotate_center = vec3(0);
-	temp.current_theta = 0;
-	temp.target_theta = temp.current_theta + PI;
-	blocks.push_back(temp);
-
-	temp.center = vec3(1, 0, 0);
-	temp.rotate_center = vec3(0);
-	temp.current_theta = atan((temp.center - temp.rotate_center).y / (temp.center - temp.rotate_center).x);
-	temp.target_theta = temp.current_theta + PI;
-	blocks.push_back(temp);
-
-	temp.center = vec3(2, 0, 0);
-	temp.rotate_center = vec3(0);
-	temp.current_theta = atan((temp.center - temp.rotate_center).y / (temp.center - temp.rotate_center).x);
-	temp.target_theta = temp.current_theta + PI;
-	blocks.push_back(temp);
-
-	temp.center = vec3(3, 0, 0);
-	temp.rotate_center = vec3(0);
-	temp.current_theta = atan((temp.center - temp.rotate_center).y / (temp.center - temp.rotate_center).x);
-	temp.target_theta = temp.current_theta + PI;
-	blocks.push_back(temp);
-
-	temp.center = vec3(3, 1, 0);
-	temp.rotate_center = vec3(0);
-	temp.current_theta = atan((temp.center - temp.rotate_center).y / (temp.center - temp.rotate_center).x);
-	temp.target_theta = temp.current_theta + PI;
-	blocks.push_back(temp);
-
-	temp.center = vec3(3, 2, 0);
-	temp.rotate_center = vec3(0);
-	temp.current_theta = atan((temp.center - temp.rotate_center).y / (temp.center - temp.rotate_center).x);
-	temp.target_theta = temp.current_theta + PI;
-	blocks.push_back(temp);
-
-	temp.center = vec3(3, 3, 0);
-	temp.rotate_center = vec3(0);
-	temp.current_theta = atan((temp.center - temp.rotate_center).y / (temp.center - temp.rotate_center).x);
-	temp.target_theta = temp.current_theta + PI;
-	blocks.push_back(temp);
-
-	temp.center = vec3(3, 3, 1);
-	temp.rotate_center = vec3(0);
-	temp.current_theta = atan((temp.center - temp.rotate_center).y / (temp.center - temp.rotate_center).x);
-	temp.target_theta = temp.current_theta + PI;
-	blocks.push_back(temp);
-
-	temp.center = vec3(3, 3, 2);
-	temp.rotate_center = vec3(0);
-	temp.current_theta = atan((temp.center - temp.rotate_center).y / (temp.center - temp.rotate_center).x);
-	temp.target_theta = temp.current_theta + PI;
-	blocks.push_back(temp);
-//	temp.center = vec3(3, 3, 3);
-//	blocks.push_back(temp);
+	blocks.push_back( init_block( vec3(0,0,0), vec3(0) ) );
+	blocks.push_back( init_block( vec3(1,0,0), vec3(0) ) );
+	blocks.push_back( init_block( vec3(2,0,0), vec3(0) ) );
+	blocks.push_back( init_block( vec3(3,0,0), vec3(0) ) );
+	blocks.push_back( init_block( vec3(3,1,0), vec3(0) ) );
+	blocks.push_back( init_block( vec3(3,2,0), vec3(0) ) );
+	blocks.push_back( init_block( vec3(3,3,0), vec3(0) ) );
+	blocks.push_back( init_block( vec3(3,3,1), vec3(0) ) );
+	blocks.push_back( init_block( vec3(3,3,2), vec3(0) ) );
+	blocks.push_back( init_block( vec3(3,3,3), vec3(0) ) );
 	
 	return blocks;
 }
