@@ -10,16 +10,21 @@ static const char*	vert_shader_path = "shaders/dreamlike.vert";
 static const char*	frag_shader_path = "shaders/dreamlike.frag";
 
 GLuint	block_vertex_array = 0;	// ID holder for block vertex array object
-std::vector<block_t> blocks = std::move(create_blocks());
-
 GLuint	sphere_vertex_array = 0;	// ID holder for sphere vertex array object
+
+
+std::vector<block_t> blocks1 = std::move(create_blocks1());
+std::vector<block_t> rotate_blocks1 = std::move(create_rotate_blocks1());
+
+//multiple character use available
 std::vector<character_t>	characters = std::move(create_characters());
 
-std::vector<std::vector<block_t>*> obstacles;
+std::vector<std::vector<block_t>*> obstacles1;
 
 float	current_frame_time;
 float	last_frame_time;
 float	t = 0.0f;				
+int		stage = 1;
 
 bool ctrl_pressed = 0;
 bool shift_pressed = 0;
@@ -27,6 +32,7 @@ bool up_pressed = 0;
 bool down_pressed = 0;
 bool left_pressed = 0;
 bool right_pressed = 0;
+bool lever_activate = 0;
 int	wire_mode = 0;
 
 bool	m_tracking = false;
@@ -148,25 +154,36 @@ void render()
 	// notify GL that we use our own program
 	glUseProgram(program);
 
-	// bind vertex array object
-	glBindVertexArray(block_vertex_array);
+	if (stage == 1) {
+		// bind vertex array object
+		glBindVertexArray(block_vertex_array);
+		// render circles: trigger shader program to process vertex data
+		for (auto& s : blocks1)
+		{
+			s.update(t);
+			glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+			glDrawElements(GL_TRIANGLES, 6 * 4 * 3, GL_UNSIGNED_INT, nullptr);
+		}
+		lever_activate = 0;
+		for (auto& s : rotate_blocks1)
+		{
+			s.update(t);
+			if (s.rotate_flag == true) lever_activate = 1;
+			glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+			glDrawElements(GL_TRIANGLES, 6 * 4 * 3, GL_UNSIGNED_INT, nullptr);
+		}
 
-	// render circles: trigger shader program to process vertex data
-	for (auto& s : blocks)
-	{
-		s.update(t);
-		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
-		glDrawElements(GL_TRIANGLES, 6*4*3, GL_UNSIGNED_INT, nullptr);
-	}
+		// bind vertex array object
+		glBindVertexArray(sphere_vertex_array);
+		// render circles: trigger shader program to process vertex data
+		for (auto& s : characters)
+		{
+			if (!lever_activate)
+				s.update(t, obstacles1);
 
-	// bind vertex array object
-	glBindVertexArray(sphere_vertex_array);
-	// render circles: trigger shader program to process vertex data
-	for (auto& s : characters)
-	{
-		s.update(t,obstacles);
-		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
-		glDrawElements(GL_TRIANGLES, 101 * 100 * 6, GL_UNSIGNED_INT, nullptr);
+			glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+			glDrawElements(GL_TRIANGLES, 101 * 100 * 6, GL_UNSIGNED_INT, nullptr);
+		}
 	}
 
 	// swap front and back buffers, and display to screen
@@ -204,6 +221,15 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			for (auto& s : characters) s.right_button(1);
 		if (key == GLFW_KEY_SPACE)
 			for (auto& s : characters) s.spacebar_button();
+		if (key == GLFW_KEY_R) {
+			if (lever_activate == 0) {
+				lever_activate = 1;
+				if (stage == 1) {
+					for (auto& s : rotate_blocks1)
+						s.block_rotation(PI / 2);
+				}
+			}
+		}
 
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
@@ -493,7 +519,8 @@ bool user_init()
 	create_block_vertex_array();
 	create_sphere_vertex_array();
 
-	obstacles.push_back(&blocks);
+	obstacles1.push_back(&blocks1);
+	obstacles1.push_back(&rotate_blocks1);
 
 	return true;
 }

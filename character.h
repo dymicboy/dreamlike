@@ -43,7 +43,15 @@ inline character_t init_character( vec3 _center, float _facing=0, int _floor=0)
 inline std::vector<character_t> create_characters()
 {
 	std::vector<character_t> characters;
-	characters.push_back(init_character(vec3(1, 0.5, 0.5),PI/2));
+	//x-axis test 
+	characters.push_back(init_character(vec3(2, 0, -1), PI / 2, 1));
+
+	//y-axis test
+	characters.push_back(init_character(vec3(1, 3, 0), PI / 2, 2));
+
+	//z-axis test
+	characters.push_back(init_character(vec3(1, 0.5, 1), PI / 2, 0));
+
 	return characters;
 }
 
@@ -66,6 +74,8 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 	if (back_arrow_button) moving -= 1;
 	if (right_arrow_button) rotating -= 1;
 	if (left_arrow_button) rotating += 1;
+
+	if (floor == 1) rotating *= -1;
 
 	facing_theta += 2*t*rotating;
 
@@ -95,59 +105,108 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 	}
 
 	bool onfloor = false;
-	bool blocked = false;
-
 	std::vector<std::vector<block_t>*>::iterator iter;
 	for (iter = obstacles.begin(); iter != obstacles.end(); iter++) {
 		std::vector<block_t> blocks = **iter;
 		for (auto& s : blocks)
 		{
+			// if floor is z axis
 			if (floor == 0) {
 				//block on next_location
-				//x축으로 갔을 때 블록이랑 만났을 때
+				//if block is on next x axis
 				if (abs(next_location.x - s.center.x) < character_size + s.size / 2 &&
 					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
 					next_location.z > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2) {
 					next_location.x = location.x;
 				}
-				//y축으로 갔을 때 블록이랑 만났을 때
+				//if block is on next y axis
 				if (abs(next_location.y - s.center.y) < character_size + s.size / 2 &&
 					next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
 					next_location.z > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2) {
 					next_location.y = location.y;
 				}
-				//다음 위치에서 속해있는 블록이면
+				//if it's landed on the floor
 				if (next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
 					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
-					next_location.z - s.center.z <= s.size / 2 + character_size &&
-					s.center.z - next_location.z <= s.size / 2 + character_size) {
+					next_location.z - s.center.z <= s.size / 2 + character_size + 0.01 &&
+					s.center.z - next_location.z <= s.size / 2 + character_size + 0.01) {
 					falling = min(0, falling);
 					onfloor = true;
 					next_location.z = s.size / 2 + character_size + s.center.z;
 				}
 			}
+			// if floor is x axis
 			else if (floor == 1) {
+				//block on next_location
+				//if block is on next z axis
+				if (abs(next_location.z - s.center.z) < character_size + s.size / 2 &&
+					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
+					next_location.x > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2) {
+					next_location.z = location.z;
+				}
+				//if block is on next y axis
+				if (abs(next_location.y - s.center.y) < character_size + s.size / 2 &&
+					next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
+					next_location.x > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2) {
+					next_location.y = location.y;
+				}
+				//if it's landed on the floor
+				if (next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
+					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
+					next_location.x - s.center.x <= s.size / 2 + character_size + 0.01 &&
+					s.center.x - next_location.x <= s.size / 2 + character_size + 0.01) {
+					falling = min(0, falling);
+					onfloor = true;
+					next_location.x = s.size / 2 + character_size + s.center.x;
+				}
 
 			}
+			// if floor is y axis
 			else if (floor == 2) {
-
+				//block on next_location
+				//if block is on next x axis
+				if (abs(next_location.x - s.center.x) < character_size + s.size / 2 &&
+					next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
+					next_location.y > s.center.y - s.size / 2 && next_location.y < s.center.y + s.size / 2) {
+					next_location.x = location.x;
+				}
+				//if block is on next z axis
+				if (abs(next_location.z - s.center.z) < character_size + s.size / 2 &&
+					next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
+					next_location.y > s.center.y - s.size / 2 && next_location.y < s.center.y + s.size / 2) {
+					next_location.z = location.z;
+				}
+				//if it's landed on the floor
+				if (next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
+					next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
+					next_location.y - s.center.y <= s.size / 2 + character_size + 0.01 &&
+					s.center.y - next_location.y <= s.size / 2 + character_size + 0.01) {
+					falling = min(0, falling);
+					onfloor = true;
+					next_location.y = s.size / 2 + character_size + s.center.y;
+				}
 			}
 		}
 	}
-	if ((!onfloor) || falling < 0) {
+	
+	if ((!onfloor) || falling < -0.01) {
 		if (floor == 0) {
 			falling += t;
-			next_location.z = location.z - (falling>=0?1:-1)*falling * falling * gravity;
+			next_location.z = location.z - (falling >= 0 ? 1 : -1) * falling * falling * gravity;
 		}
 		else if (floor == 1) {
 			falling += t;
-			next_location.x = location.x - falling * falling * gravity;
+			next_location.x = location.x - (falling >= 0 ? 1 : -1) * falling * falling * gravity;
+		}
+		else if (floor == 2) {
+			falling += t;
+			next_location.y = location.y - (falling >= 0 ? 1 : -1) * falling * falling * gravity;
 		}
 	}
 	else {
 		falling = 0;
 	}
-	if (next_location.z < -10.0f) next_location = ori_location;
+	if (next_location.x < -10.0f || next_location.y < -10.0f || next_location.z < -10.0f) next_location = ori_location;
 	location = next_location;
 
 
