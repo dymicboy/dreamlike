@@ -61,6 +61,7 @@
     <ClInclude Include="cgmath.h" />
     <ClInclude Include="cgut.h" />
     <ClInclude Include="block.h" />
+    <ClInclude Include="character.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dreamlike.frag" />

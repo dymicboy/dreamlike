@@ -1,6 +1,7 @@
 #include "cgmath.h"		// slee's simple math library
 #include "cgut.h"		// slee's OpenGL utility
 #include "block.h"
+#include "character.h"
 
 //*************************************
 // global constants
@@ -8,15 +9,24 @@ static const char*	window_name = "team dreamlike";
 static const char*	vert_shader_path = "shaders/dreamlike.vert";
 static const char*	frag_shader_path = "shaders/dreamlike.frag";
 
-GLuint	block_vertex_array = 0;	// ID holder for vertex array object
-auto	blocks = std::move(create_blocks());
+GLuint	block_vertex_array = 0;	// ID holder for block vertex array object
+std::vector<block_t> blocks = std::move(create_blocks());
+
+GLuint	sphere_vertex_array = 0;	// ID holder for sphere vertex array object
+std::vector<character_t>	characters = std::move(create_characters());
+
+std::vector<std::vector<block_t>*> obstacles;
 
 float	current_frame_time;
 float	last_frame_time;
-float	t = 0.0f;						
+float	t = 0.0f;				
 
 bool ctrl_pressed = 0;
 bool shift_pressed = 0;
+bool up_pressed = 0;
+bool down_pressed = 0;
+bool left_pressed = 0;
+bool right_pressed = 0;
 int	wire_mode = 0;
 
 bool	m_tracking = false;
@@ -146,6 +156,16 @@ void render()
 	{
 		s.update(t);
 		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+		glDrawElements(GL_TRIANGLES, 6*4*3, GL_UNSIGNED_INT, nullptr);
+	}
+
+	// bind vertex array object
+	glBindVertexArray(sphere_vertex_array);
+	// render circles: trigger shader program to process vertex data
+	for (auto& s : characters)
+	{
+		s.update(t,obstacles);
+		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
 		glDrawElements(GL_TRIANGLES, 101 * 100 * 6, GL_UNSIGNED_INT, nullptr);
 	}
 
@@ -174,6 +194,17 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
 	if(action==GLFW_PRESS)
 	{
+		if (key == GLFW_KEY_UP)
+			for (auto& s : characters) s.front_button(1);
+		if (key == GLFW_KEY_DOWN)
+			for (auto& s : characters) s.back_button(1);
+		if (key == GLFW_KEY_LEFT)
+			for (auto& s : characters) s.left_button(1);
+		if (key == GLFW_KEY_RIGHT)
+			for (auto& s : characters) s.right_button(1);
+		if (key == GLFW_KEY_SPACE)
+			for (auto& s : characters) s.spacebar_button();
+
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
 		else if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)		ctrl_pressed = 1;
@@ -188,6 +219,15 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 	else if (action == GLFW_RELEASE) {
 		if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)		ctrl_pressed = 0;
 		else if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)		shift_pressed = 0;
+
+		if (key == GLFW_KEY_UP)
+			for (auto& s : characters) s.front_button(0);
+		if (key == GLFW_KEY_DOWN)
+			for (auto& s : characters) s.back_button(0);
+		if (key == GLFW_KEY_LEFT)
+			for (auto& s : characters) s.left_button(0);
+		if (key == GLFW_KEY_RIGHT)
+			for (auto& s : characters) s.right_button(0);
 	}
 }
 
@@ -314,28 +354,48 @@ void create_block_vertex_array()
 
 	vertices.push_back({ vec3(-0.5,-0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
 	vertices.push_back({ vec3(0.5,-0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
-	vertices.push_back({ vec3(0.5,0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0.5,0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
 	vertices.push_back({ vec3(-0.5,0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+
+	vertices.push_back({ vec3(0,0,-0.5), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0,0,0.5), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
+
+	vertices.push_back({ vec3(0.5,0,0), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0,-0.5,0), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(-0.5,0,0), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0,0.5,0), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
 
 	//create indices
 	//bottom
-	indices.push_back(0); indices.push_back(2); indices.push_back(1);
-	indices.push_back(0); indices.push_back(3); indices.push_back(2);
+	indices.push_back(0); indices.push_back(8); indices.push_back(1);
+	indices.push_back(1); indices.push_back(8); indices.push_back(2);
+	indices.push_back(2); indices.push_back(8); indices.push_back(3);
+	indices.push_back(3); indices.push_back(8); indices.push_back(0);
 	//top
-	indices.push_back(4); indices.push_back(5); indices.push_back(6);
-	indices.push_back(4); indices.push_back(6); indices.push_back(7);
+	indices.push_back(5); indices.push_back(9); indices.push_back(4);
+	indices.push_back(6); indices.push_back(9); indices.push_back(5);
+	indices.push_back(7); indices.push_back(9); indices.push_back(6);
+	indices.push_back(4); indices.push_back(9); indices.push_back(7);
 	//front
-	indices.push_back(5); indices.push_back(1); indices.push_back(2);
-	indices.push_back(5); indices.push_back(2); indices.push_back(6);
+	indices.push_back(5); indices.push_back(10); indices.push_back(6);
+	indices.push_back(6); indices.push_back(10); indices.push_back(2);
+	indices.push_back(2); indices.push_back(10); indices.push_back(1);
+	indices.push_back(1); indices.push_back(10); indices.push_back(5);
 	//left
-	indices.push_back(4); indices.push_back(0); indices.push_back(5);
-	indices.push_back(5); indices.push_back(0); indices.push_back(1);
-	//right
-	indices.push_back(6); indices.push_back(2); indices.push_back(3);
-	indices.push_back(6); indices.push_back(3); indices.push_back(7);
+	indices.push_back(4); indices.push_back(11); indices.push_back(5);
+	indices.push_back(5); indices.push_back(11); indices.push_back(1);
+	indices.push_back(1); indices.push_back(11); indices.push_back(0);
+	indices.push_back(0); indices.push_back(11); indices.push_back(4);
 	//back
-	indices.push_back(7); indices.push_back(3); indices.push_back(0);
-	indices.push_back(7); indices.push_back(0); indices.push_back(4);
+	indices.push_back(7); indices.push_back(12); indices.push_back(4);
+	indices.push_back(4); indices.push_back(12); indices.push_back(0);
+	indices.push_back(0); indices.push_back(12); indices.push_back(3);
+	indices.push_back(3); indices.push_back(12); indices.push_back(7);
+	//right
+	indices.push_back(6); indices.push_back(13); indices.push_back(7);
+	indices.push_back(7); indices.push_back(13); indices.push_back(3);
+	indices.push_back(3); indices.push_back(13); indices.push_back(2);
+	indices.push_back(2); indices.push_back(13); indices.push_back(6);
 
 	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
 	static GLuint index_buffer = 0;		// ID holder for index buffer
@@ -359,6 +419,65 @@ void create_block_vertex_array()
 	block_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
 }
 
+void create_sphere_vertex_array()
+{
+
+	std::vector<uint> indices;
+	std::vector<vertex> vertices;
+
+	//create bottom
+	for (int i = 0; i < 100; i++) {
+		vertices.push_back({ vec3(0,0,-1), vec3(0,0,-1.0f), vec2(float(i) / 100, 0) });
+	}
+
+	for (int i = 0; i < 100; i++) {
+		float t = PI * i / float(100), c = cos(t), s = sin(t);
+		for (int j = 0; j < 100; j++) {
+			float p = PI * 2.0f * j / float(100), pc = cos(p), ps = sin(p);
+			vertices.push_back({ vec3(pc * s,ps * s,-c), vec3(0,0,-1.0f), vec2(float(j) / 100,float(i) / 100) });
+		}
+	}
+	//create top
+	for (int i = 0; i < 100; i++) {
+		float t = PI * i / float(100), c = cos(t), s = sin(t);
+		vertices.push_back({ vec3(0,0,1), vec3(0,0,-1.0f), vec2(float(i) / 100, 1) });
+	}
+
+	//create indices
+	for (int i = 0; i < 100 + 1; i++) {
+		for (int j = 0; j < 100; j++) {
+			indices.push_back(j + i * 100);
+			indices.push_back((j + 1) % 100 + (i + 1) * 100);
+			indices.push_back(j + (i + 1) * 100);
+
+			indices.push_back(j + i * 100);
+			indices.push_back((j + 1) % 100 + i * 100);
+			indices.push_back((j + 1) % 100 + (i + 1) * 100);
+		}
+	}
+	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
+	static GLuint index_buffer = 0;		// ID holder for index buffer
+
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
+
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+
+	// geneation of index buffer
+	glGenBuffers(1, &index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (sphere_vertex_array) glDeleteVertexArrays(1, &sphere_vertex_array);
+	sphere_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
+
+}
+
 
 bool user_init()
 {
@@ -372,6 +491,9 @@ bool user_init()
 
 	// load the mesh
 	create_block_vertex_array();
+	create_sphere_vertex_array();
+
+	obstacles.push_back(&blocks);
 
 	return true;
 }

@@ -63,9 +63,24 @@ inline std::vector<block_t> create_blocks()
 	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, -1 * block_size), vec3(0)));
 	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, +0 * block_size), vec3(0)));
 
-	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, +1 * block_size), vec3(+2 * block_size, +3 * block_size, +3 * block_size), vec3(-5 * block_size, -5 * block_size, -5 * block_size), vec3(0,1,0), true));
-	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, +2 * block_size), vec3(+2 * block_size, +3 * block_size, +3 * block_size), vec3(-5 * block_size, -5 * block_size, -5 * block_size), vec3(0,1,0), true));
-	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, +3 * block_size), vec3(+2 * block_size, +3 * block_size, +3 * block_size), vec3(-5 * block_size, -5 * block_size, -5 * block_size), vec3(0,1,0), true));
+	blocks.push_back(
+		init_block(
+			vec3(+2 * block_size, +3 * block_size, +1 * block_size), 
+			vec3(+2 * block_size, +3 * block_size, +3 * block_size), 
+			vec3(-5 * block_size, -5 * block_size, -5 * block_size), 
+			vec3(0,1,0), true));
+	blocks.push_back(
+		init_block(
+			vec3(+2 * block_size, +3 * block_size, +2 * block_size), 
+			vec3(+2 * block_size, +3 * block_size, +3 * block_size), 
+			vec3(-5 * block_size, -5 * block_size, -5 * block_size), 
+			vec3(0,1,0), true));
+	blocks.push_back(
+		init_block(
+			vec3(+2 * block_size, +3 * block_size, +3 * block_size), 
+			vec3(+2 * block_size, +3 * block_size, +3 * block_size), 
+			vec3(-5 * block_size, -5 * block_size, -5 * block_size), 
+			vec3(0,1,0), true));
 	
 	return blocks;
 }
@@ -73,7 +88,7 @@ inline std::vector<block_t> create_blocks()
 inline void block_t::update(float t)
 {
 	//현재 도는 중일때
-	if (rotate_flag) {
+	if (abs(current_theta-target_theta)>t) {
 		float c = cos(current_theta), s = sin(current_theta);
 		current_theta = current_theta + t;
 		facing_theta = facing_theta + t;
