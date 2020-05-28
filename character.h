@@ -44,13 +44,13 @@ inline std::vector<character_t> create_characters()
 {
 	std::vector<character_t> characters;
 	//x-axis test 
-	characters.push_back(init_character(vec3(2, 0, -1), PI / 2, 1));
+	characters.push_back(init_character(vec3(2, 0, -1), 0, 1));
 
 	//y-axis test
-	characters.push_back(init_character(vec3(1, 3, 0), PI / 2, 2));
+	characters.push_back(init_character(vec3(1, 3, 0), 0, 2));
 
 	//z-axis test
-	characters.push_back(init_character(vec3(1, 0.5, 1), PI / 2, 0));
+	characters.push_back(init_character(vec3(1, 0.5, 1), 0, 0));
 
 	return characters;
 }
@@ -75,7 +75,6 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 	if (right_arrow_button) rotating -= 1;
 	if (left_arrow_button) rotating += 1;
 
-	if (floor == 1) rotating *= -1;
 
 	facing_theta += 2*t*rotating;
 
@@ -83,21 +82,21 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 	vec3 axis = vec3(0, 0, 1);
 
 	if (floor == 0) {
-		vec3 axis = vec3(0, 0, 1);
+		axis = vec3(0, 0, 1);
 		next_location = vec3(
 			location.x + cos(facing_theta) * t * moving, 
 			location.y + sin(facing_theta) * t * moving, 
 			location.z);
 	}
 	else if (floor == 1) {
-		vec3 axis = vec3(1, 0, 0);
+		axis = vec3(1, 0, 0);
 		next_location = vec3(
 			location.x , 
-			location.y + sin(facing_theta) * t * moving, 
-			location.z + cos(facing_theta) * t * moving);
+			location.y + cos(facing_theta) * t * moving, 
+			location.z + sin(facing_theta) * t * moving);
 	}
 	else {
-		vec3 axis = vec3(0, 1, 0);
+		axis = vec3(0, 1, 0);
 		next_location = vec3(
 			location.x + sin(facing_theta) * t * moving, 
 			location.y, 

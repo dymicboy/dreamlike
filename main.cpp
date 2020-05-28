@@ -6,11 +6,13 @@
 //*************************************
 // global constants
 static const char*	window_name = "team dreamlike";
-static const char*	vert_shader_path = "shaders/dreamlike.vert";
-static const char*	frag_shader_path = "shaders/dreamlike.frag";
+static const char*	vert_shader_path = "../dreamlike.vert";
+static const char*	frag_shader_path = "../dreamlike.frag";
 
 GLuint	block_vertex_array = 0;	// ID holder for block vertex array object
-GLuint	sphere_vertex_array = 0;	// ID holder for sphere vertex array object
+GLuint	sphere_vertex_array_x = 0;	// ID holder for sphere vertex array object
+GLuint	sphere_vertex_array_y = 0;	// ID holder for sphere vertex array object
+GLuint	sphere_vertex_array_z = 0;	// ID holder for sphere vertex array object
 
 
 std::vector<block_t> blocks1 = std::move(create_blocks1());
@@ -174,10 +176,13 @@ void render()
 		}
 
 		// bind vertex array object
-		glBindVertexArray(sphere_vertex_array);
+
 		// render circles: trigger shader program to process vertex data
 		for (auto& s : characters)
 		{
+			if (s.floor == 0) glBindVertexArray(sphere_vertex_array_z);
+			if (s.floor == 1) glBindVertexArray(sphere_vertex_array_x);
+			if (s.floor == 2) glBindVertexArray(sphere_vertex_array_y);
 			if (!lever_activate)
 				s.update(t, obstacles1);
 
@@ -383,13 +388,12 @@ void create_block_vertex_array()
 	vertices.push_back({ vec3(0.5,0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
 	vertices.push_back({ vec3(-0.5,0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
 
-	vertices.push_back({ vec3(0,0,-0.5), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
-	vertices.push_back({ vec3(0,0,0.5), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
-
-	vertices.push_back({ vec3(0.5,0,0), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
-	vertices.push_back({ vec3(0,-0.5,0), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
-	vertices.push_back({ vec3(-0.5,0,0), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
-	vertices.push_back({ vec3(0,0.5,0), vec3(145.0f / 255, 162.0f / 255, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0,0,-0.5), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0,0,0.5), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0.5,0,0), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0,-0.5,0), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(-0.5,0,0), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0,0.5,0), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
 
 	//create indices
 	//bottom
@@ -447,26 +451,44 @@ void create_block_vertex_array()
 
 void create_sphere_vertex_array()
 {
-
+	//if floor is x, y, z (commonly it's z)
 	std::vector<uint> indices;
-	std::vector<vertex> vertices;
+	std::vector<vertex> vertices_x, vertices_y, vertices_z;
 
 	//create bottom
 	for (int i = 0; i < 100; i++) {
-		vertices.push_back({ vec3(0,0,-1), vec3(0,0,-1.0f), vec2(float(i) / 100, 0) });
+		vertices_x.push_back({ vec3(-1,0,0), vec3(1,0,0), vec2(float(i) / 100, 0) });
+		vertices_z.push_back({ vec3(0,-1,0), vec3(0,1,0), vec2(float(i) / 100, 0) });
+		vertices_z.push_back({ vec3(0,0,-1), vec3(0,0,1), vec2(float(i) / 100, 0) });
 	}
 
 	for (int i = 0; i < 100; i++) {
 		float t = PI * i / float(100), c = cos(t), s = sin(t);
 		for (int j = 0; j < 100; j++) {
 			float p = PI * 2.0f * j / float(100), pc = cos(p), ps = sin(p);
-			vertices.push_back({ vec3(pc * s,ps * s,-c), vec3(0,0,-1.0f), vec2(float(j) / 100,float(i) / 100) });
+			vertices_x.push_back({
+				vec3(-c, pc * s, ps * s),
+				vec3(cos(float(j) * PI / 200) * (float(i) / 100),sin(float(j) * PI / 200) * (float(i) / 100),1),
+				vec2(float(j) / 100,float(i) / 100)
+			});
+			vertices_y.push_back({
+				vec3(ps * s , -c, pc * s),
+				vec3(cos(float(j) * PI / 200) * (float(i) / 100),sin(float(j) * PI / 200) * (float(i) / 100),1),
+				vec2(float(j) / 100,float(i) / 100)
+			});
+			vertices_z.push_back({
+				vec3(pc * s,ps * s,-c), 
+				vec3(cos(float(j)*PI/200)*(float(i) / 100),sin(float(j)*PI/200)*(float(i)/100),1),
+				vec2(float(j) / 100,float(i) / 100)
+			});
 		}
 	}
 	//create top
 	for (int i = 0; i < 100; i++) {
 		float t = PI * i / float(100), c = cos(t), s = sin(t);
-		vertices.push_back({ vec3(0,0,1), vec3(0,0,-1.0f), vec2(float(i) / 100, 1) });
+		vertices_x.push_back({ vec3(1,0,0), vec3(1,1,1), vec2(float(i) / 100, 1) });
+		vertices_y.push_back({ vec3(0,1,0), vec3(1,1,1), vec2(float(i) / 100, 1) });
+		vertices_z.push_back({ vec3(0,0,1), vec3(1,1,1), vec2(float(i) / 100, 1) });
 	}
 
 	//create indices
@@ -481,26 +503,57 @@ void create_sphere_vertex_array()
 			indices.push_back((j + 1) % 100 + (i + 1) * 100);
 		}
 	}
+
 	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
 	static GLuint index_buffer = 0;		// ID holder for index buffer
-
 	// clear and create new buffers
 	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
 	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
-
 	// generation of vertex buffer: use vertices as it is
 	glGenBuffers(1, &vertex_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
-
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_x.size(), &vertices_x[0], GL_STATIC_DRAW);
 	// geneation of index buffer
 	glGenBuffers(1, &index_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
-
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
-	if (sphere_vertex_array) glDeleteVertexArrays(1, &sphere_vertex_array);
-	sphere_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
+	if (sphere_vertex_array_x) glDeleteVertexArrays(1, &sphere_vertex_array_x);
+	sphere_vertex_array_x = cg_create_vertex_array(vertex_buffer, index_buffer);
+
+	vertex_buffer = 0;	// ID holder for vertex buffer
+	index_buffer = 0;		// ID holder for index buffer
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_y.size(), &vertices_y[0], GL_STATIC_DRAW);
+	// geneation of index buffer
+	glGenBuffers(1, &index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (sphere_vertex_array_y) glDeleteVertexArrays(1, &sphere_vertex_array_y);
+	sphere_vertex_array_y = cg_create_vertex_array(vertex_buffer, index_buffer);
+
+	vertex_buffer = 0;	// ID holder for vertex buffer
+	index_buffer = 0;		// ID holder for index buffer
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_z.size(), &vertices_z[0], GL_STATIC_DRAW);
+	// geneation of index buffer
+	glGenBuffers(1, &index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (sphere_vertex_array_z) glDeleteVertexArrays(1, &sphere_vertex_array_z);
+	sphere_vertex_array_z = cg_create_vertex_array(vertex_buffer, index_buffer);
 
 }
 

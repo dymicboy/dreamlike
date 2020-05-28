@@ -14,6 +14,6 @@ out vec4 fragColor;
 
 void main()
 {
-	//fragColor = vec4(normalize(norm),1);
-	fragColor = vec4(tc.xxx, 1);
+	fragColor = vec4(normalize(norm),1);
+	//fragColor = vec4(tc.xxx, 1);
 }
