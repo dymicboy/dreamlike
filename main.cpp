@@ -18,19 +18,23 @@ GLuint	sphere_vertex_array_x = 0;	// ID holder for sphere vertex array object
 GLuint	sphere_vertex_array_y = 0;	// ID holder for sphere vertex array object
 GLuint	sphere_vertex_array_z = 0;	// ID holder for sphere vertex array object
 
+GLuint	trigger_vertex_array_x = 0;	// ID holder for trigger vertex array object
+GLuint	trigger_vertex_array_y = 0;	// ID holder for trigger vertex array object
+GLuint	trigger_vertex_array_z = 0;	// ID holder for trigger vertex array object
 
-std::vector<block_t> blocks1 = std::move(create_blocks1());
-std::vector<block_t> rotate_blocks1 = std::move(create_rotate_blocks1());
+std::vector<block_t> blocks[5];				// 5개 스테이지, 기본 블럭
+std::vector<block_t> rotate_blocks[5][3];	// 5개 스테이지, 최대 3개의 rotating group
+std::vector<trigger_t> triggers[5];			// 5개 스테이지, triggers group
 
 //multiple character use available
-std::vector<character_t>	characters = std::move(create_characters());
+std::vector<character_t>	characters[5];
 
-std::vector<std::vector<block_t>*> obstacles1;
+std::vector<std::vector<block_t>*> obstacles[5];
 
 float	current_frame_time;
 float	last_frame_time;
 float	t = 0.0f;				
-int		stage = 1;
+int		stage = 0;
 
 bool ctrl_pressed = 0;
 bool shift_pressed = 0;
@@ -159,39 +163,44 @@ void render()
 	// notify GL that we use our own program
 	glUseProgram(program);
 
-	if (stage == 1) {
-		// bind vertex array object
-		glBindVertexArray(block_vertex_array);
-		// render circles: trigger shader program to process vertex data
-		for (auto& s : blocks1)
-		{
-			s.update(t);
-			glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
-			glDrawElements(GL_TRIANGLES, 6 * 4 * 3, GL_UNSIGNED_INT, nullptr);
-		}
-		lever_activate = 0;
-		for (auto& s : rotate_blocks1)
-		{
-			s.update(t);
-			if (s.rotate_flag == true) lever_activate = 1;
-			glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
-			glDrawElements(GL_TRIANGLES, 6 * 4 * 3, GL_UNSIGNED_INT, nullptr);
-		}
+	glBindVertexArray(block_vertex_array);
+	for (auto& s : blocks[stage])
+	{
+		s.update(t);
+		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+		glDrawElements(GL_TRIANGLES, 6 * 4 * 3, GL_UNSIGNED_INT, nullptr);
+	}
 
-		// bind vertex array object
+	lever_activate = 0;
+	for (auto& s : rotate_blocks[stage][0])
+	{
+		s.update(t);
+		if (s.rotate_flag == true) lever_activate = 1;
+		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+		glDrawElements(GL_TRIANGLES, 6 * 4 * 3, GL_UNSIGNED_INT, nullptr);
+	}
 
-		// render circles: trigger shader program to process vertex data
-		for (auto& s : characters)
-		{
-			if (s.floor == 0) glBindVertexArray(sphere_vertex_array_z);
-			if (s.floor == 1) glBindVertexArray(sphere_vertex_array_x);
-			if (s.floor == 2) glBindVertexArray(sphere_vertex_array_y);
-			if (!lever_activate)
-				s.update(t, obstacles1);
+	for (auto& s : triggers[stage])
+	{
+		s.update(t);
+		if (s.floor == 0) glBindVertexArray(trigger_vertex_array_z);
+		if (s.floor == 1) glBindVertexArray(trigger_vertex_array_x);
+		if (s.floor == 2) glBindVertexArray(trigger_vertex_array_y);
+		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+		glDrawElements(GL_TRIANGLES, 8 * 3, GL_UNSIGNED_INT, nullptr);
+	}
 
-			glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
-			glDrawElements(GL_TRIANGLES, 301 * 300 * 6, GL_UNSIGNED_INT, nullptr);
-		}
+	for (auto& s : characters[stage])
+	{
+		if (s.floor == 0) glBindVertexArray(sphere_vertex_array_z);
+		if (s.floor == 1) glBindVertexArray(sphere_vertex_array_x);
+		if (s.floor == 2) glBindVertexArray(sphere_vertex_array_y);
+		if (!lever_activate)
+			s.update(t, obstacles[stage]);
+
+		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+		glDrawElements(GL_TRIANGLES, 301 * 300 * 6, GL_UNSIGNED_INT, nullptr);
+		
 	}
 
 	// swap front and back buffers, and display to screen
@@ -220,29 +229,30 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 	if(action==GLFW_PRESS)
 	{
 		if (key == GLFW_KEY_UP)
-			for (auto& s : characters) s.front_button(1);
+			for (auto& s : characters[stage]) s.front_button(1);
 		if (key == GLFW_KEY_DOWN)
-			for (auto& s : characters) s.back_button(1);
+			for (auto& s : characters[stage]) s.back_button(1);
 		if (key == GLFW_KEY_LEFT)
-			for (auto& s : characters) s.left_button(1);
+			for (auto& s : characters[stage]) s.left_button(1);
 		if (key == GLFW_KEY_RIGHT)
-			for (auto& s : characters) s.right_button(1);
+			for (auto& s : characters[stage]) s.right_button(1);
 		if (key == GLFW_KEY_SPACE)
-			for (auto& s : characters) s.spacebar_button();
+			for (auto& s : characters[stage]) s.spacebar_button();
 		if (key == GLFW_KEY_R) {
 			if (lever_activate == 0) {
 				lever_activate = 1;
-				if (stage == 1) {
-					for (auto& s : rotate_blocks1)
-						s.block_rotation(PI / 2);
-				}
+				for (auto& s : rotate_blocks[stage][0])
+					s.block_rotation(PI / 2);
 			}
+		}
+		if (key == GLFW_KEY_LEFT_SHIFT) {
+			//trigger
 		}
 
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
 		else if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)		ctrl_pressed = 1;
-		else if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)		shift_pressed = 1;
+		else if (key == GLFW_KEY_RIGHT_SHIFT)		shift_pressed = 1;
 		else if (key == GLFW_KEY_HOME)				cam = camera();
 		else if (key == GLFW_KEY_W) {
 			wire_mode = !wire_mode;
@@ -255,13 +265,13 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		else if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)		shift_pressed = 0;
 
 		if (key == GLFW_KEY_UP)
-			for (auto& s : characters) s.front_button(0);
+			for (auto& s : characters[stage]) s.front_button(0);
 		if (key == GLFW_KEY_DOWN)
-			for (auto& s : characters) s.back_button(0);
+			for (auto& s : characters[stage]) s.back_button(0);
 		if (key == GLFW_KEY_LEFT)
-			for (auto& s : characters) s.left_button(0);
+			for (auto& s : characters[stage]) s.left_button(0);
 		if (key == GLFW_KEY_RIGHT)
-			for (auto& s : characters) s.right_button(0);
+			for (auto& s : characters[stage]) s.right_button(0);
 	}
 }
 
@@ -516,54 +526,111 @@ void create_sphere_vertex_array()
 
 	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
 	static GLuint index_buffer = 0;		// ID holder for index buffer
-	// clear and create new buffers
-	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+
 	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
-	// generation of vertex buffer: use vertices as it is
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_x.size(), &vertices_x[0], GL_STATIC_DRAW);
 	// geneation of index buffer
 	glGenBuffers(1, &index_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_x.size(), &vertices_x[0], GL_STATIC_DRAW);
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
 	if (sphere_vertex_array_x) glDeleteVertexArrays(1, &sphere_vertex_array_x);
 	sphere_vertex_array_x = cg_create_vertex_array(vertex_buffer, index_buffer);
 
 	vertex_buffer = 0;	// ID holder for vertex buffer
-	index_buffer = 0;		// ID holder for index buffer
 	// clear and create new buffers
 	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
-	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
 	// generation of vertex buffer: use vertices as it is
 	glGenBuffers(1, &vertex_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_y.size(), &vertices_y[0], GL_STATIC_DRAW);
-	// geneation of index buffer
-	glGenBuffers(1, &index_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
 	if (sphere_vertex_array_y) glDeleteVertexArrays(1, &sphere_vertex_array_y);
 	sphere_vertex_array_y = cg_create_vertex_array(vertex_buffer, index_buffer);
 
 	vertex_buffer = 0;	// ID holder for vertex buffer
-	index_buffer = 0;		// ID holder for index buffer
 	// clear and create new buffers
 	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
-	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
 	// generation of vertex buffer: use vertices as it is
 	glGenBuffers(1, &vertex_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_z.size(), &vertices_z[0], GL_STATIC_DRAW);
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (sphere_vertex_array_z) glDeleteVertexArrays(1, &sphere_vertex_array_z);
+	sphere_vertex_array_z = cg_create_vertex_array(vertex_buffer, index_buffer);
+}
+void create_trigger_vertex_array()
+{
+	std::vector<uint> indices;
+	std::vector<vertex> vertices;
+
+	//create vertices
+	vertices.push_back({ vec3(-0.5f,-0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
+	vertices.push_back({ vec3(0.5f,-0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
+	vertices.push_back({ vec3(0.5f,0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
+	vertices.push_back({ vec3(-0.5f,0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
+	vertices.push_back({ vec3(-0.3f,-0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
+	vertices.push_back({ vec3(0.3f,-0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
+	vertices.push_back({ vec3(0.3f,0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
+	vertices.push_back({ vec3(-0.3f,0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
+
+	//create indices
+	indices.push_back(0); indices.push_back(1); indices.push_back(4);
+	indices.push_back(4); indices.push_back(1); indices.push_back(5);
+	indices.push_back(1); indices.push_back(2); indices.push_back(5);
+	indices.push_back(5); indices.push_back(2); indices.push_back(6);
+	indices.push_back(2); indices.push_back(3); indices.push_back(6);
+	indices.push_back(6); indices.push_back(3); indices.push_back(7);
+	indices.push_back(3); indices.push_back(0); indices.push_back(7);
+	indices.push_back(7); indices.push_back(0); indices.push_back(4);
+
+	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
+	static GLuint index_buffer = 0;		// ID holder for index buffer
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
 	// geneation of index buffer
 	glGenBuffers(1, &index_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
-	if (sphere_vertex_array_z) glDeleteVertexArrays(1, &sphere_vertex_array_z);
-	sphere_vertex_array_z = cg_create_vertex_array(vertex_buffer, index_buffer);
+	if (trigger_vertex_array_z) glDeleteVertexArrays(1, &trigger_vertex_array_z);
+	trigger_vertex_array_z = cg_create_vertex_array(vertex_buffer, index_buffer);
+
+	for (auto& s : vertices) s.pos = vec3(s.pos.z, s.pos.x, s.pos.y);
+	vertex_buffer = 0;
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (trigger_vertex_array_x) glDeleteVertexArrays(1, &trigger_vertex_array_x);
+	trigger_vertex_array_x = cg_create_vertex_array(vertex_buffer, index_buffer);
+
+	for (auto& s : vertices) s.pos = vec3(s.pos.z, s.pos.x, s.pos.y);
+	vertex_buffer = 0;
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (trigger_vertex_array_y) glDeleteVertexArrays(1, &trigger_vertex_array_y);
+	trigger_vertex_array_y = cg_create_vertex_array(vertex_buffer, index_buffer);
 }
 
 
@@ -580,9 +647,15 @@ bool user_init()
 	// load the mesh
 	create_block_vertex_array();
 	create_sphere_vertex_array();
+	create_trigger_vertex_array();
 
-	obstacles1.push_back(&blocks1);
-	obstacles1.push_back(&rotate_blocks1);
+	//stage 0
+	blocks[0]				= std::move(create_blocks1());
+	rotate_blocks[0][0]		= std::move(create_rotate_blocks1());
+	triggers[0]				= std::move(create_triggers1());
+	characters[0]			= std::move(create_characters());
+	obstacles[0].push_back(&blocks[0]);
+	obstacles[0].push_back(&rotate_blocks[0][0]);
 
 	return true;
 }
