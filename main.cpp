@@ -1,6 +1,10 @@
 #include "cgmath.h"		// slee's simple math library
 #include "cgut.h"		// slee's OpenGL utility
+#include "assimp_loader.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #include "block.h"
+#include "trigger.h"
 #include "character.h"
 
 //*************************************
@@ -51,7 +55,7 @@ struct camera
 {
 	vec3	eye = vec3(200,200,200 );
 	vec3	at = vec3( 0, 0, 0 );
-	vec3	up = vec3( 0, 0, 1 );
+	vec3	up = vec3( 0, 1, 0 );
 	mat4	view_matrix = mat4::look_at( eye, at, up );
 
 	float	fovy = PI/4.0f; // must be in radian
@@ -118,7 +122,6 @@ mat4 ortho( float fovy, float aspect, float dnear, float dfar )
 //*************************************
 void update()
 {
-
 	// update global simulation parameter
 	if (current_frame_time) {
 		current_frame_time = float(glfwGetTime());
@@ -187,7 +190,7 @@ void render()
 				s.update(t, obstacles1);
 
 			glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
-			glDrawElements(GL_TRIANGLES, 101 * 100 * 6, GL_UNSIGNED_INT, nullptr);
+			glDrawElements(GL_TRIANGLES, 301 * 300 * 6, GL_UNSIGNED_INT, nullptr);
 		}
 	}
 
@@ -448,59 +451,66 @@ void create_block_vertex_array()
 	if (block_vertex_array) glDeleteVertexArrays(1, &block_vertex_array);
 	block_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
 }
-
 void create_sphere_vertex_array()
 {
 	//if floor is x, y, z (commonly it's z)
 	std::vector<uint> indices;
 	std::vector<vertex> vertices_x, vertices_y, vertices_z;
+	vec3 color;
 
 	//create bottom
-	for (int i = 0; i < 100; i++) {
-		vertices_x.push_back({ vec3(-1,0,0), vec3(1,0,0), vec2(float(i) / 100, 0) });
-		vertices_z.push_back({ vec3(0,-1,0), vec3(0,1,0), vec2(float(i) / 100, 0) });
-		vertices_z.push_back({ vec3(0,0,-1), vec3(0,0,1), vec2(float(i) / 100, 0) });
+	for (int i = 0; i < 300; i++) {
+		vertices_x.push_back({ vec3(-1,0,0), vec3(1,0,0), vec2(float(i) / 300, 0) });
+		vertices_y.push_back({ vec3(0,-1,0), vec3(0,1,0), vec2(float(i) / 300, 0) });
+		vertices_z.push_back({ vec3(0,0,-1), vec3(0,0,1), vec2(float(i) / 300, 0) });
 	}
+	
+	for (int i = 0; i < 300; i++) {
+		float t = PI * i / float(300), c = cos(t), s = sin(t);
+		for (int j = 0; j < 300; j++) {
+			float p = PI * 2.0f * j / float(300), pc = cos(p), ps = sin(p);
 
-	for (int i = 0; i < 100; i++) {
-		float t = PI * i / float(100), c = cos(t), s = sin(t);
-		for (int j = 0; j < 100; j++) {
-			float p = PI * 2.0f * j / float(100), pc = cos(p), ps = sin(p);
+			if ((pc * s) > 0.98f) color = vec3(0);
+			else if ((pc * s) > 0.95f) color = vec3(1.0f, 1.0f, 1.0f);
+			else if ((pc * s) > 0.9f) color = vec3(0);
+			else if ((pc * s) < -0.98f) color = vec3(0);
+			else color = vec3(1.0f, (1.0f - ((pc * s) + 1.0f) / 2.0f), 1.0f);
+
 			vertices_x.push_back({
 				vec3(-c, pc * s, ps * s),
-				vec3(cos(float(j) * PI / 200) * (float(i) / 100),sin(float(j) * PI / 200) * (float(i) / 100),1),
-				vec2(float(j) / 100,float(i) / 100)
-			});
+				color,
+				vec2(float(j) / 300, float(i) / 300)
+				});
 			vertices_y.push_back({
 				vec3(ps * s , -c, pc * s),
-				vec3(cos(float(j) * PI / 200) * (float(i) / 100),sin(float(j) * PI / 200) * (float(i) / 100),1),
-				vec2(float(j) / 100,float(i) / 100)
+				color,
+				vec2(float(j) / 300,float(i) / 300)
 			});
 			vertices_z.push_back({
-				vec3(pc * s,ps * s,-c), 
-				vec3(cos(float(j)*PI/200)*(float(i) / 100),sin(float(j)*PI/200)*(float(i)/100),1),
-				vec2(float(j) / 100,float(i) / 100)
-			});
+				vec3(pc * s,ps * s,-c),
+				color,
+				vec2(float(j) / 300,float(i) / 300)
+				});
 		}
 	}
 	//create top
-	for (int i = 0; i < 100; i++) {
-		float t = PI * i / float(100), c = cos(t), s = sin(t);
-		vertices_x.push_back({ vec3(1,0,0), vec3(1,1,1), vec2(float(i) / 100, 1) });
-		vertices_y.push_back({ vec3(0,1,0), vec3(1,1,1), vec2(float(i) / 100, 1) });
-		vertices_z.push_back({ vec3(0,0,1), vec3(1,1,1), vec2(float(i) / 100, 1) });
+	for (int i = 0; i < 300; i++) {
+		float t = PI * i / float(300), c = cos(t), s = sin(t);
+		vertices_x.push_back({ vec3(1,0,0), vec3(cos(float(i) * PI / 600),sin(float(i) * PI / 600),1), vec2(float(i) / 300, 1) });
+		vertices_y.push_back({ vec3(0,1,0), vec3(cos(float(i) * PI / 600),sin(float(i) * PI / 600),1), vec2(float(i) / 300, 1) });
+		vertices_z.push_back({ vec3(0,0,1), vec3(cos(float(i) * PI / 600),sin(float(i) * PI / 600),1), vec2(float(i) / 300, 1) });
 	}
 
 	//create indices
-	for (int i = 0; i < 100 + 1; i++) {
-		for (int j = 0; j < 100; j++) {
-			indices.push_back(j + i * 100);
-			indices.push_back((j + 1) % 100 + (i + 1) * 100);
-			indices.push_back(j + (i + 1) * 100);
+	for (int i = 0; i < 300 + 1; i++) {
+		for (int j = 0; j < 300; j++) {
+			indices.push_back(j + i * 300);
+			indices.push_back((j + 1) % 300 + (i + 1) * 300);
+			indices.push_back(j + (i + 1) * 300);
 
-			indices.push_back(j + i * 100);
-			indices.push_back((j + 1) % 100 + i * 100);
-			indices.push_back((j + 1) % 100 + (i + 1) * 100);
+			indices.push_back(j + i * 300);
+			indices.push_back((j + 1) % 300 + i * 300);
+			indices.push_back((j + 1) % 300 + (i + 1) * 300);
 		}
 	}
 
@@ -554,7 +564,6 @@ void create_sphere_vertex_array()
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
 	if (sphere_vertex_array_z) glDeleteVertexArrays(1, &sphere_vertex_array_z);
 	sphere_vertex_array_z = cg_create_vertex_array(vertex_buffer, index_buffer);
-
 }
 
 
