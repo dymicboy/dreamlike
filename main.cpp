@@ -34,16 +34,20 @@ std::vector<std::vector<block_t>*> obstacles[5];
 
 float	current_frame_time;
 float	last_frame_time;
-float	t = 0.0f;				
+float	t = 0.0f;		
+float	default_camera_zoom = 1.0f;
+float	camera_zoom0 = default_camera_zoom;
+float	camera_zoom = default_camera_zoom;
+float	stage_change_t = 0.0f;
 int		stage = 0;
+int		next_stage = 0;
 
-bool ctrl_pressed = 0;
-bool shift_pressed = 0;
 bool up_pressed = 0;
 bool down_pressed = 0;
 bool left_pressed = 0;
 bool right_pressed = 0;
 bool lever_activate = 0;
+bool stage_change = 0;
 int	wire_mode = 0;
 
 bool	m_tracking = false;
@@ -58,11 +62,13 @@ vec3	eye0, at0, up0; // the last eye at up position
 // common structures
 struct camera
 {
-	vec3	eye = vec3(200,200,200 );
+	vec3	eye = vec3(200,200,200);
 	vec3	at = vec3( 0, 0, 0 );
 	vec3	up = vec3( 0, 1, 0 );
 	mat4	view_matrix = mat4::look_at( eye, at, up );
 
+	float	current_theta	= PI / 4.0f;
+	float	target_theta	= PI / 4.0f;
 	float	fovy = PI/4.0f; // must be in radian
 	float	aspect;
 	float	dnear = 1.0f;
@@ -107,9 +113,9 @@ vec2 cursor_to_ndc(dvec2 cursor, ivec2 window_size)
 }
 
 // Orthogonal Projection Function.
-mat4 ortho( float fovy, float aspect, float dnear, float dfar )
+mat4 ortho( float fovy, float aspect, float dnear, float dfar, float how_far )
 {
-	float t = 1 / tan(fovy / 2),	b = -t;
+	float t = how_far / tan(fovy / 2),	b = -t;
 	float l = -t * aspect,			r = -l;
 	float n = dnear,				f = dfar;
 	mat4 matrix;
@@ -138,14 +144,36 @@ void update()
 		current_frame_time = float(glfwGetTime());
 		last_frame_time = current_frame_time;
 	}
-
+	if (stage_change == 1) {
+		if (stage_change_t > 0.0f) {
+			stage_change_t = stage_change_t - t;
+			camera_zoom += stage_change_t * stage_change_t/10;
+		}
+		else {
+			stage = next_stage;
+			stage_change_t = stage_change_t - t;
+			camera_zoom -= stage_change_t * stage_change_t/10;
+			if (camera_zoom <= default_camera_zoom) {
+				stage_change = 0;
+				camera_zoom = default_camera_zoom;
+			}
+		}
+	}
+	//camera rotate
+	if (cam.current_theta < cam.target_theta) {
+		cam.current_theta = min(cam.current_theta + t, cam.target_theta);
+		cam.eye = vec3(200 * sqrt(2.0f) * cos(cam.current_theta), 200, 200 * sqrt(2.0f) * sin(cam.current_theta));
+		cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
+	}
+	else {
+		lever_activate = 0;
+	}
 	// update projection matrix
 	cam.aspect = window_size.x/float(window_size.y);
 	//cam.projection_matrix = mat4::perspective( cam.fovy, cam.aspect, cam.dnear, cam.dfar );
-	cam.projection_matrix = ortho( cam.fovy, cam.aspect, cam.dnear, cam.dfar );
+	cam.projection_matrix = ortho( cam.fovy, cam.aspect, cam.dnear, cam.dfar, camera_zoom);
 
 	// build the model matrix for oscillating scale
-	float t = float(glfwGetTime());
 	float scale	= 1;
 	mat4 model_matrix = mat4::scale( scale, scale, scale );
 
@@ -163,7 +191,6 @@ void render()
 
 	// notify GL that we use our own program
 	glUseProgram(program);
-
 	glBindVertexArray(block_vertex_array);
 	for (auto& s : blocks[stage])
 	{
@@ -172,7 +199,6 @@ void render()
 		glDrawElements(GL_TRIANGLES, 6 * 4 * 3, GL_UNSIGNED_INT, nullptr);
 	}
 
-	lever_activate = 0;
 	for (auto& s : rotate_blocks[stage][0])
 	{
 		s.update(t);
@@ -246,14 +272,9 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 					s.block_rotation(PI / 2);
 			}
 		}
-		if (key == GLFW_KEY_LEFT_SHIFT) {
-			//trigger
-		}
 
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
-		else if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)		ctrl_pressed = 1;
-		else if (key == GLFW_KEY_RIGHT_SHIFT)		shift_pressed = 1;
 		else if (key == GLFW_KEY_HOME)				cam = camera();
 		else if (key == GLFW_KEY_W) {
 			wire_mode = !wire_mode;
@@ -262,8 +283,6 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		}
 	}
 	else if (action == GLFW_RELEASE) {
-		if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)		ctrl_pressed = 0;
-		else if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)		shift_pressed = 0;
 
 		if (key == GLFW_KEY_UP)
 			for (auto& s : characters[stage]) s.front_button(0);
@@ -275,39 +294,24 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			for (auto& s : characters[stage]) s.right_button(0);
 		if (key == GLFW_KEY_T)
 		{
-			stage = (stage + 1) % 3;//TOTAL_STAGE;
-			printf("%d\n", stage);
+			next_stage = (stage + 1) % 3;//TOTAL_STAGE;
+			stage_change = 1;
+			stage_change_t = 1.5f;
+			printf("stage : %d\n", next_stage);
 		}
 		if (key == GLFW_KEY_M)
 		{
-			if (cam.eye.x == 200 && cam.eye.z == 200)
-			{
-				cam.eye = vec3(-200, 200, 200);
-				eye_change = 1;
+			if (lever_activate == 0) {
+				lever_activate = 1;
+				cam.target_theta = cam.current_theta + PI / 2.0f;
 			}
-			else if (cam.eye.x == -200 && cam.eye.z == 200)
-			{
-				cam.eye = vec3(-200, 200, -200);
-				eye_change = 2;
-			}
-			else if (cam.eye.x == -200 && cam.eye.z == -200)
-			{
-				cam.eye = vec3(200, 200, -200);
-				eye_change = 3;
-			}
-			else if (cam.eye.x == 200 && cam.eye.z == -200)
-			{
-				cam.eye = vec3(200, 200, 200);
-				eye_change = 0;
-			}
-			cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
 		}
 	}
 }
 
 void mouse( GLFWwindow* window, int button, int action, int mods )
 {
-	if(button==GLFW_MOUSE_BUTTON_MIDDLE || (button==GLFW_MOUSE_BUTTON_LEFT && ctrl_pressed))
+	if(button==GLFW_MOUSE_BUTTON_MIDDLE)
 	{
 		//panning
 		dvec2 pos; glfwGetCursorPos(window,&pos.x,&pos.y);
@@ -323,16 +327,14 @@ void mouse( GLFWwindow* window, int button, int action, int mods )
 			p_tracking = false;			// enable trackball tracking
 		}
 	}
-	else if (button == GLFW_MOUSE_BUTTON_RIGHT || (button == GLFW_MOUSE_BUTTON_LEFT && shift_pressed))
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT)
 	{
 		//zooming
 		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
 		vec2 npos = cursor_to_ndc(pos, window_size);
 		if (action == GLFW_PRESS) {
 			z_tracking = true;
-			eye0 = cam.eye;
-			at0 = cam.at;
-			up0 = cam.up;
+			camera_zoom0 = camera_zoom;
 			m0 = npos;
 		}
 		else if (action == GLFW_RELEASE) {
@@ -366,9 +368,7 @@ void motion( GLFWwindow* window, double x, double y )
 		float p = (npos.y - m0.y);
 		if ((p < 0.0001f && p >0)  || (p<0 && p>-0.0001f) ) return;		// ignore subtle movement
 		if (p > 1.0f || p < -1.0f) return;
-		mat4 tmp = mat4::look_at(eye0, at0, up0);
-		cam.eye = eye0 + vec3(tmp._31, tmp._32, tmp._33) * p * 10;
-		cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
+		camera_zoom = camera_zoom0 + p;
 	}
 	else if(m_tracking) {
 		// trackball
