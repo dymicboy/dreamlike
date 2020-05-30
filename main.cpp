@@ -22,9 +22,10 @@ GLuint	trigger_vertex_array_x = 0;	// ID holder for trigger vertex array object
 GLuint	trigger_vertex_array_y = 0;	// ID holder for trigger vertex array object
 GLuint	trigger_vertex_array_z = 0;	// ID holder for trigger vertex array object
 
-std::vector<block_t> blocks[5];				// 5개 스테이지, 기본 블럭
-std::vector<block_t> rotate_blocks[5][3];	// 5개 스테이지, 최대 3개의 rotating group
-std::vector<trigger_t> triggers[5];			// 5개 스테이지, triggers group
+#define	TOTAL_STAGE	(5)
+std::vector<block_t> blocks[TOTAL_STAGE];				// 5개 스테이지, 기본 블럭
+std::vector<block_t> rotate_blocks[TOTAL_STAGE][3];		// 5개 스테이지, 최대 3개의 rotating group
+std::vector<trigger_t> triggers[TOTAL_STAGE];			// 5개 스테이지, triggers group
 
 //multiple character use available
 std::vector<character_t>	characters[5];
@@ -272,6 +273,35 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			for (auto& s : characters[stage]) s.left_button(0);
 		if (key == GLFW_KEY_RIGHT)
 			for (auto& s : characters[stage]) s.right_button(0);
+		if (key == GLFW_KEY_T)
+		{
+			stage = (stage + 1) % 3;//TOTAL_STAGE;
+			printf("%d\n", stage);
+		}
+		if (key == GLFW_KEY_M)
+		{
+			if (cam.eye.x == 200 && cam.eye.z == 200)
+			{
+				cam.eye = vec3(-200, 200, 200);
+				eye_change = 1;
+			}
+			else if (cam.eye.x == -200 && cam.eye.z == 200)
+			{
+				cam.eye = vec3(-200, 200, -200);
+				eye_change = 2;
+			}
+			else if (cam.eye.x == -200 && cam.eye.z == -200)
+			{
+				cam.eye = vec3(200, 200, -200);
+				eye_change = 3;
+			}
+			else if (cam.eye.x == 200 && cam.eye.z == -200)
+			{
+				cam.eye = vec3(200, 200, 200);
+				eye_change = 0;
+			}
+			cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
+		}
 	}
 }
 
@@ -649,13 +679,34 @@ bool user_init()
 	create_sphere_vertex_array();
 	create_trigger_vertex_array();
 
-	//stage 0
-	blocks[0]				= std::move(create_blocks1());
-	rotate_blocks[0][0]		= std::move(create_rotate_blocks1());
-	triggers[0]				= std::move(create_triggers1());
-	characters[0]			= std::move(create_characters());
-	obstacles[0].push_back(&blocks[0]);
-	obstacles[0].push_back(&rotate_blocks[0][0]);
+	// Stage 0.
+	stage = 0;
+	blocks[stage]				= std::move(create_blocks0());
+	rotate_blocks[stage][0]		= std::move(create_rotate_blocks0());
+	triggers[stage]				= std::move(create_triggers0());
+	characters[stage]			= std::move(create_characters0());
+	obstacles[stage].push_back(&blocks[stage]);
+	obstacles[stage].push_back(&rotate_blocks[stage][0]);
+
+	// Stage 1.
+	stage = 1;
+	blocks[stage]				= std::move(create_blocks1());
+	rotate_blocks[stage][0]		= std::move(create_rotate_blocks1());
+	triggers[stage]				= std::move(create_triggers1());
+	characters[stage]			= std::move(create_characters1());
+	obstacles[stage].push_back(&blocks[stage]);
+	obstacles[stage].push_back(&rotate_blocks[stage][0]);
+
+	// Stage 2.
+	stage = 2;
+	blocks[stage] = std::move(create_blocks2());
+	rotate_blocks[stage][0] = std::move(create_rotate_blocks2());
+	triggers[stage] = std::move(create_triggers2());
+	characters[stage] = std::move(create_characters2());
+	obstacles[stage].push_back(&blocks[stage]);
+	obstacles[stage].push_back(&rotate_blocks[stage][0]);
+
+	stage = 0;
 
 	return true;
 }

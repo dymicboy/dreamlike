@@ -40,17 +40,36 @@ inline character_t init_character( vec3 _center, float _facing=0, int _floor=0)
 	return temp;
 }
 
-inline std::vector<character_t> create_characters()
+inline std::vector<character_t> create_characters0()
 {
 	std::vector<character_t> characters;
+
 	//x-axis test 
-	characters.push_back(init_character(vec3(2, 0, -1), 0, 1));
+	//characters.push_back(init_character(vec3(+2, -1, +0), 0, 1));
+	//y-axis test
+	characters.push_back(init_character(vec3(+1 * block_size, -1 * block_size, +2 * block_size), 0, 2));
+	//z-axis test
+	//characters.push_back(init_character(vec3(+1, +1, +0.5), 0, 0));
+
+	return characters;
+}
+
+inline std::vector<character_t> create_characters1()
+{
+	std::vector<character_t> characters;
 
 	//y-axis test
-	characters.push_back(init_character(vec3(1, 3, 0), 0, 2));
+	characters.push_back(init_character(vec3(+1 * block_size, -1 * block_size, +2 * block_size), 0, 2));
 
-	//z-axis test
-	characters.push_back(init_character(vec3(1, 0.5, 1), 0, 0));
+	return characters;
+}
+
+inline std::vector<character_t> create_characters2()
+{
+	std::vector<character_t> characters;
+
+	//y-axis test
+	characters.push_back(init_character(vec3(+1 * block_size, -1 * block_size, +2 * block_size), 0, 2));
 
 	return characters;
 }
