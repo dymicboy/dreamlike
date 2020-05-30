@@ -12,11 +12,11 @@
 static const char*	window_name = "team dreamlike";
 static const char*	vert_shader_path = "../dreamlike.vert";
 static const char*	frag_shader_path = "../dreamlike.frag";
+static const char*	mesh_obj = "./bin/Cat/12221_Cat_v1_l3.obj";
+
+mesh2* catMesh[5];
 
 GLuint	block_vertex_array = 0;	// ID holder for block vertex array object
-GLuint	sphere_vertex_array_x = 0;	// ID holder for sphere vertex array object
-GLuint	sphere_vertex_array_y = 0;	// ID holder for sphere vertex array object
-GLuint	sphere_vertex_array_z = 0;	// ID holder for sphere vertex array object
 
 GLuint	trigger_vertex_array_x = 0;	// ID holder for trigger vertex array object
 GLuint	trigger_vertex_array_y = 0;	// ID holder for trigger vertex array object
@@ -211,7 +211,7 @@ void render()
 {
 	// clear screen (with background color) and clear depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 	// notify GL that we use our own program
 	glUseProgram(program);
 	glBindVertexArray(block_vertex_array);
@@ -242,17 +242,24 @@ void render()
 
 	for (auto& s : characters[stage])
 	{
-		if (s.floor == 0) glBindVertexArray(sphere_vertex_array_z);
-		if (s.floor == 1) glBindVertexArray(sphere_vertex_array_x);
-		if (s.floor == 2) glBindVertexArray(sphere_vertex_array_y);
+		mesh2* pMesh = catMesh[0];
+		if (s.floor == 0) pMesh = catMesh[0];
+		if (s.floor == 1) pMesh = catMesh[1];
+		if (s.floor == 2) pMesh = catMesh[2];
+		glBindVertexArray(pMesh->vertex_array);
+		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+		geometry& g = pMesh->geometry_list[0];
+		glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+		glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+		glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+		// render vertices: trigger shader programs to process vertex data
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh->index_buffer);
+		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+
 		if (!lever_activate)
 			s.update(t, obstacles[stage]);
-
-		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
-		glDrawElements(GL_TRIANGLES, 301 * 300 * 6, GL_UNSIGNED_INT, nullptr);
-		
 	}
-
+	
 	// swap front and back buffers, and display to screen
 	glfwSwapBuffers(window);
 }
@@ -516,109 +523,12 @@ void create_block_vertex_array()
 	if (block_vertex_array) glDeleteVertexArrays(1, &block_vertex_array);
 	block_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
 }
-void create_sphere_vertex_array()
+void create_cat_vertex_array()
 {
-	//if floor is x, y, z (commonly it's z)
-	std::vector<uint> indices;
-	std::vector<vertex> vertices_x, vertices_y, vertices_z;
-	vec3 color;
+	catMesh[0] = load_model(mesh_obj, false, 0); // floor z
+	catMesh[1] = load_model(mesh_obj, false, 1); // floor x
+	catMesh[2] = load_model(mesh_obj, false, 2); // floor y
 
-	//create bottom
-	for (int i = 0; i < 300; i++) {
-		vertices_x.push_back({ vec3(-1,0,0), vec3(1,0,0), vec2(float(i) / 300, 0) });
-		vertices_y.push_back({ vec3(0,-1,0), vec3(0,1,0), vec2(float(i) / 300, 0) });
-		vertices_z.push_back({ vec3(0,0,-1), vec3(0,0,1), vec2(float(i) / 300, 0) });
-	}
-	
-	for (int i = 0; i < 300; i++) {
-		float t = PI * i / float(300), c = cos(t), s = sin(t);
-		for (int j = 0; j < 300; j++) {
-			float p = PI * 2.0f * j / float(300), pc = cos(p), ps = sin(p);
-
-			if ((pc * s) > 0.98f) color = vec3(0);
-			else if ((pc * s) > 0.95f) color = vec3(1.0f, 1.0f, 1.0f);
-			else if ((pc * s) > 0.9f) color = vec3(0);
-			else if ((pc * s) < -0.98f) color = vec3(0);
-			else color = vec3(1.0f, (1.0f - ((pc * s) + 1.0f) / 2.0f), 1.0f);
-
-			vertices_x.push_back({
-				vec3(-c, pc * s, ps * s),
-				color,
-				vec2(float(j) / 300, float(i) / 300)
-				});
-			vertices_y.push_back({
-				vec3(ps * s , -c, pc * s),
-				color,
-				vec2(float(j) / 300,float(i) / 300)
-			});
-			vertices_z.push_back({
-				vec3(pc * s,ps * s,-c),
-				color,
-				vec2(float(j) / 300,float(i) / 300)
-				});
-		}
-	}
-	//create top
-	for (int i = 0; i < 300; i++) {
-		float t = PI * i / float(300), c = cos(t), s = sin(t);
-		vertices_x.push_back({ vec3(1,0,0), vec3(cos(float(i) * PI / 600),sin(float(i) * PI / 600),1), vec2(float(i) / 300, 1) });
-		vertices_y.push_back({ vec3(0,1,0), vec3(cos(float(i) * PI / 600),sin(float(i) * PI / 600),1), vec2(float(i) / 300, 1) });
-		vertices_z.push_back({ vec3(0,0,1), vec3(cos(float(i) * PI / 600),sin(float(i) * PI / 600),1), vec2(float(i) / 300, 1) });
-	}
-
-	//create indices
-	for (int i = 0; i < 300 + 1; i++) {
-		for (int j = 0; j < 300; j++) {
-			indices.push_back(j + i * 300);
-			indices.push_back((j + 1) % 300 + (i + 1) * 300);
-			indices.push_back(j + (i + 1) * 300);
-
-			indices.push_back(j + i * 300);
-			indices.push_back((j + 1) % 300 + i * 300);
-			indices.push_back((j + 1) % 300 + (i + 1) * 300);
-		}
-	}
-
-	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
-	static GLuint index_buffer = 0;		// ID holder for index buffer
-
-	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
-	// geneation of index buffer
-	glGenBuffers(1, &index_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
-
-	// clear and create new buffers
-	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
-	// generation of vertex buffer: use vertices as it is
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_x.size(), &vertices_x[0], GL_STATIC_DRAW);
-	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
-	if (sphere_vertex_array_x) glDeleteVertexArrays(1, &sphere_vertex_array_x);
-	sphere_vertex_array_x = cg_create_vertex_array(vertex_buffer, index_buffer);
-
-	vertex_buffer = 0;	// ID holder for vertex buffer
-	// clear and create new buffers
-	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
-	// generation of vertex buffer: use vertices as it is
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_y.size(), &vertices_y[0], GL_STATIC_DRAW);
-	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
-	if (sphere_vertex_array_y) glDeleteVertexArrays(1, &sphere_vertex_array_y);
-	sphere_vertex_array_y = cg_create_vertex_array(vertex_buffer, index_buffer);
-
-	vertex_buffer = 0;	// ID holder for vertex buffer
-	// clear and create new buffers
-	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
-	// generation of vertex buffer: use vertices as it is
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices_z.size(), &vertices_z[0], GL_STATIC_DRAW);
-	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
-	if (sphere_vertex_array_z) glDeleteVertexArrays(1, &sphere_vertex_array_z);
-	sphere_vertex_array_z = cg_create_vertex_array(vertex_buffer, index_buffer);
 }
 void create_trigger_vertex_array()
 {
@@ -698,10 +608,12 @@ bool user_init()
 	glClearColor( 39/255.0f, 40/255.0f, 34/255.0f, 1.0f );	// set clear color
 	glEnable( GL_CULL_FACE );								// turn on backface culling
 	glEnable( GL_DEPTH_TEST );								// turn on depth tests
+	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
 
 	// load the mesh
 	create_block_vertex_array();
-	create_sphere_vertex_array();
+	create_cat_vertex_array();
 	create_trigger_vertex_array();
 
 	// Stage 0.
@@ -740,6 +652,10 @@ bool user_init()
 
 void user_finalize()
 {
+	delete_texture_cache();
+	delete catMesh[0];
+	delete catMesh[1];
+	delete catMesh[2];
 }
 
 int main( int argc, char* argv[] )

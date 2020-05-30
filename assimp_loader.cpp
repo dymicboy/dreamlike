@@ -99,7 +99,7 @@ Texture* load_texture(const aiMaterial* ai_material, const fs::path& model_direc
     return nullptr;
 }
 
-mesh2* load_model(const std::string& path, bool bFlipUV)
+mesh2* load_model(const std::string& path, bool bFlipUV, int floor)
 {
     // *** preprocess ************************************************************
     fs::path model_path(path);
@@ -212,6 +212,23 @@ mesh2* load_model(const std::string& path, bool bFlipUV)
 
         // append a geometry.
         new_mesh->geometry_list.push_back(std::move(geometry(mat, index_start, index_list.size() - index_start)));
+    }
+    float tmp;
+    if (floor == 1 || floor == 2) {
+        for (auto& s : new_mesh->vertex_list) {
+            tmp = s.pos.x;
+            s.pos.x = s.pos.y;
+            s.pos.y = s.pos.z;
+            s.pos.z = tmp;
+        }
+        if (floor == 1) {
+            for (auto& s : new_mesh->vertex_list) {
+                tmp = s.pos.x;
+                s.pos.x = s.pos.y;
+                s.pos.y = s.pos.z;
+                s.pos.z = tmp;
+            }
+        }
     }
 
     // *** buffer creation *******************************************************

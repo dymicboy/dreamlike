@@ -18,6 +18,9 @@ uniform float	shininess;
 uniform vec4	light_position, Ia, Id, Is;	// light
 uniform vec4	Ka, Kd, Ks;					// material properties
 
+uniform sampler2D TEX;
+uniform bool use_texture;
+
 vec4 phong(vec3 l, vec3 n, vec3 h)
 {
 	vec4 Ira = Ka * Ia;									// ambient reflection
@@ -51,5 +54,5 @@ void main()
 	//else if (mode == 2)	fragColor = iKd;
 	//else				fragColor = vec4(tc, 0, 1);
 	vec4 temp = phong(l, n, h);
-	fragColor = vec4(temp.x * norm.x, temp.y * norm.y, temp.z * norm.z, 1);
+	fragColor = use_texture ? texture( TEX, tc ) : vec4(temp.x * norm.x, temp.y * norm.y, temp.z * norm.z, 1);
 }

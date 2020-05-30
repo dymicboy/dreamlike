@@ -2,7 +2,7 @@
 #ifndef __character_H__
 #define __character_H__
 
-float character_size = 0.2f;
+float character_size = 0.01f;
 float jump_power = 0.01f;
 float gravity = 0.03f;
 
@@ -29,7 +29,7 @@ struct character_t
 	void	update(float t, std::vector<std::vector<block_t>*>& obstcle);
 };
 
-inline character_t init_character( vec3 _center, float _facing=0, int _floor=0)
+inline character_t init_character( vec3 _center, float _facing= 0, int _floor=0)
 {
 	character_t temp;
 	temp.ori_location	= _center;
@@ -47,7 +47,7 @@ inline std::vector<character_t> create_characters0()
 	//x-axis test 
 	//characters.push_back(init_character(vec3(+2, -1, +0), 0, 1));
 	//y-axis test
-	characters.push_back(init_character(vec3(+1 * block_size, -1 * block_size, +2 * block_size), 0, 2));
+	characters.push_back(init_character(vec3(+1 * block_size, -2 * block_size, +3 * block_size), -PI/2, 0));
 	//z-axis test
 	//characters.push_back(init_character(vec3(+1, +1, +0.5), 0, 0));
 
@@ -231,7 +231,7 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 
 	
 	model_matrix = mat4::translate(location)	// rotation around sun
-		* mat4::rotate(axis, facing_theta)	// self rotation
+		* mat4::rotate(axis, facing_theta+ PI / 2)	// self rotation
 		* mat4::scale(character_size, character_size, character_size);	// size
 }
 
