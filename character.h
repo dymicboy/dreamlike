@@ -69,7 +69,7 @@ inline std::vector<character_t> create_characters2()
 	std::vector<character_t> characters;
 
 	//y-axis test
-	characters.push_back(init_character(vec3(+1 * block_size, -1 * block_size, +2 * block_size), 0, 2));
+	characters.push_back(init_character(vec3(-5 * block_size, -2 * block_size, -1 * block_size), 0, 2));
 
 	return characters;
 }

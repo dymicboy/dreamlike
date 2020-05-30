@@ -24,7 +24,7 @@ GLuint	trigger_vertex_array_z = 0;	// ID holder for trigger vertex array object
 
 std::vector<block_t> blocks[TOTAL_STAGE];				// 5개 스테이지, 기본 블럭
 std::vector<block_t> rotate_blocks[TOTAL_STAGE][3];		// 5개 스테이지, 최대 3개의 rotating group
-std::vector<trigger_t> triggers[TOTAL_STAGE];			// 5개 스테이지, triggers group
+std::vector<trigger_t> triggers[TOTAL_STAGE][3];			// 5개 스테이지, triggers group
 
 //multiple character use available
 std::vector<character_t>	characters[5];
@@ -205,7 +205,6 @@ void update()
 	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
 	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
-	
 }
 
 void render()
@@ -231,7 +230,7 @@ void render()
 		glDrawElements(GL_TRIANGLES, 6 * 4 * 3, GL_UNSIGNED_INT, nullptr);
 	}
 
-	for (auto& s : triggers[stage])
+	for (auto& s : triggers[stage][0])
 	{
 		s.update(t);
 		if (s.floor == 0) glBindVertexArray(trigger_vertex_array_z);
@@ -709,7 +708,7 @@ bool user_init()
 	stage = 0;
 	blocks[stage]				= std::move(create_blocks0());
 	rotate_blocks[stage][0]		= std::move(create_rotate_blocks0());
-	triggers[stage]				= std::move(create_triggers0());
+	triggers[stage][0]			= std::move(create_triggers0());
 	characters[stage]			= std::move(create_characters0());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
@@ -718,7 +717,7 @@ bool user_init()
 	stage = 1;
 	blocks[stage]				= std::move(create_blocks1());
 	rotate_blocks[stage][0]		= std::move(create_rotate_blocks1());
-	triggers[stage]				= std::move(create_triggers1());
+	triggers[stage][0]			= std::move(create_triggers1());
 	characters[stage]			= std::move(create_characters1());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
@@ -727,12 +726,12 @@ bool user_init()
 	stage = 2;
 	blocks[stage] = std::move(create_blocks2());
 	rotate_blocks[stage][0] = std::move(create_rotate_blocks2());
-	triggers[stage] = std::move(create_triggers2());
+	triggers[stage][0] = std::move(create_triggers2());
 	characters[stage] = std::move(create_characters2());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
 
-	stage = 0;
+	stage = 2;
 
 	return true;
 }
