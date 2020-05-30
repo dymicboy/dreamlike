@@ -80,6 +80,22 @@ struct camera
 	};
 };
 
+struct light_t
+{
+	vec4	position = vec4(+10.0f, +25.0f, +10.0f, 0.0f);   // directional light
+	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
+	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+};
+
+struct material_t
+{
+	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
+	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	float	shininess = 100.0f;
+};
+
 //*************************************
 // window objects
 GLFWwindow*	window = nullptr;
@@ -97,6 +113,8 @@ int		frame = 0;				// index of rendering frames
 // scene objects
 mesh*		pMesh = nullptr;
 camera		cam;
+light_t		light;
+material_t	material;
 
 // utility function
 vec2 cursor_to_ndc(dvec2 cursor, ivec2 window_size)
@@ -118,10 +136,6 @@ mat4 ortho( float fovy, float aspect, float dnear, float dfar, float how_far )
 	float l = -t * aspect,			r = -l;
 	float n = dnear,				f = dfar;
 	mat4 matrix;
-	//matrix->_11 = 2 / (r - l); matrix->_12 = 0; matrix->_13 = 0; matrix->_14 = (l + r) / (l - r);
-	//matrix->_21 = 0; matrix->_22 = 2 / (t - b); matrix->_23 = 0; matrix->_24 = (b + t) / (b - t);
-	//matrix->_31 = 0; matrix->_32 = 0; matrix->_33 = 2 / (n - f); matrix->_34 = (n + f) / (n - f);
-	//matrix->_41 = 0; matrix->_42 = 0; matrix->_43 = 0; matrix->_44 = 1;
 	matrix._11 = 2 / (r - l);	matrix._12 = 0;				matrix._13 = 0;				matrix._14 = (l + r) / (l - r);
 	matrix._21 = 0;				matrix._22 = 2 / (t - b);	matrix._23 = 0;				matrix._24 = (b + t) / (b - t);
 	matrix._31 = 0;				matrix._32 = 0;				matrix._33 = 2 / (n - f);	matrix._34 = (n + f) / (n - f);
@@ -180,6 +194,18 @@ void update()
 	GLint uloc;
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
+
+	// setup light properties
+	glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
+	glUniform4fv(glGetUniformLocation(program, "Ia"), 1, light.ambient);
+	glUniform4fv(glGetUniformLocation(program, "Id"), 1, light.diffuse);
+	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
+
+	// setup material properties
+	glUniform4fv(glGetUniformLocation(program, "Ka"), 1, material.ambient);
+	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
+	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
+	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
 	
 }
 

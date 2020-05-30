@@ -3,7 +3,7 @@
 #define __block_H__
 
 #define	TOTAL_STAGE	(5)
-int		stage = 1;
+int		stage = 0;
 int		eye_change = 0;
 int		eye_state[TOTAL_STAGE] = { 0, 0, 4, 0, 0 };
 int		lever_change = 0;
@@ -194,23 +194,52 @@ inline std::vector<block_t> create_rotate_blocks1()
 inline std::vector<block_t> create_blocks2()
 {
 	std::vector<block_t> blocks;
-
+	// Starting Main Road.
 	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, -1 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, +0 * block_size, +2 * block_size)));
-
+	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +0 * block_size)));
 	return blocks;
 }
 
 inline std::vector<block_t> create_rotate_blocks2()
 {
 	std::vector<block_t> blocks;
+	blocks.push_back(init_block(
+		vec3(-1 * block_size, -2 * block_size, -1 * block_size), Move_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), 0));
+	blocks.push_back(init_block(
+		vec3(-1 * block_size, -2 * block_size, -2 * block_size), Move_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), 0));
+	// Center.
+	blocks.push_back(init_block(
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size), Move_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), 0));
+	blocks.push_back(init_block(
+		vec3(-2 * block_size, -2 * block_size, -3 * block_size), Move_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), -PI / 2));
+	blocks.push_back(init_block(
+		vec3(-3 * block_size, -2 * block_size, -3 * block_size), Move_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), -PI / 2));
 	return blocks;
 }
 
 inline void block_t::block_rotation(float rotate_angle=0)
 {
-	target_theta = current_theta + rotate_angle;
+	if (type == Rotate_Block)
+		target_theta = current_theta + rotate_angle;
 	rotate_flag = true;
 }
 
@@ -227,14 +256,14 @@ inline void block_t::update(float t)
 		//if it's rotating
 		if (abs(target_theta - current_theta) > 0) {
 			if (target_theta > current_theta) {
-				if (target_theta < current_theta + t) t = target_theta - current_theta;
+				if (target_theta < current_theta + 10*t) t = (target_theta - current_theta)/10;
 			}
 			else {
 				t = -t;
-				if (target_theta > current_theta + t) t = target_theta - current_theta;
+				if (target_theta > current_theta + 10*t) t = (target_theta - current_theta)/10;
 			}
-			current_theta = current_theta + t;
-			facing_theta = facing_theta + t;
+			current_theta = current_theta + 10*t;
+			facing_theta = facing_theta + 10*t;
 			if (axis.x > 0.0f)		center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta));// +(diff * sin(facing_theta));
 			else if (axis.y > 0.0f)	center = rotate_center + vec3(dis * sin(current_theta), 0, dis * cos(current_theta));// +(diff * sin(facing_theta));
 			else if (axis.z > 0.0f)	center = rotate_center + vec3(dis * cos(current_theta), dis * sin(current_theta), 0);// +(diff * sin(facing_theta));
@@ -244,6 +273,20 @@ inline void block_t::update(float t)
 			}
 			else if (stage == 1)
 			{
+				/*
+				if (sw == lever_change)
+				{
+					center			+= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
+					rotate_center	+= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
+					destination		+= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
+				}
+				else if (lever_change == lever_state[stage] - 1)
+				{
+					center			-= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
+					rotate_center	-= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
+					destination		-= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
+				}
+				*/
 			}
 		}
 		//if it finished rotating
@@ -256,7 +299,6 @@ inline void block_t::update(float t)
 	}
 	else if (type == Move_Block)
 	{
-		center += diff * t;
 		model_matrix = mat4::translate(center)
 			* mat4::scale(size, size, size);
 	}
