@@ -12,6 +12,7 @@
 static const char*	window_name = "team dreamlike";
 static const char*	vert_shader_path = "../dreamlike.vert";
 static const char*	frag_shader_path = "../dreamlike.frag";
+static const char* mesh_obj = "../bin/mesh/Cat/12221_Cat_v1_l3.obj";
 
 GLuint	block_vertex_array = 0;	// ID holder for block vertex array object
 GLuint	sphere_vertex_array_x = 0;	// ID holder for sphere vertex array object
