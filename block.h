@@ -2,7 +2,12 @@
 #ifndef __block_H__
 #define __block_H__
 
+#define	TOTAL_STAGE	(5)
+int		stage = 1;
 int		eye_change = 0;
+int		eye_state[TOTAL_STAGE] = { 0, 0, 4, 0, 0 };
+int		lever_change = 0;
+int		lever_state[TOTAL_STAGE] = { 4, 8, 0, 0, 0 };
 float	block_size = 0.5f;
 
 enum Block_Type : int
@@ -21,9 +26,10 @@ struct block_t
 	mat4	model_matrix;					// modeling transformation
 	Block_Type	type	= Stop_Block;
 	// Change Block's Common Variables. (Change Block = Rotate_Block | Move_Block | Elevate_Block)
-	int		sw		= 0;
-	vec3	diff	= vec3(0);
-	float	dis		= 0;
+	int		sw			= 0;
+	vec3	destination = vec3(0);
+	vec3	diff		= vec3(0);
+	float	dis			= 0;
 	// "Rotate_Block" Variables.
 	vec3	rotate_center	= vec3(0);
 	vec3	axis			= vec3(0);
@@ -39,7 +45,7 @@ struct block_t
 	void	update(float t);
 };
 
-inline block_t init_block( vec3 _center, Block_Type _type = Stop_Block, int _sw = 0, vec3 _diff = vec3(0),
+inline block_t init_block( vec3 _center, Block_Type _type = Stop_Block, int _sw = 0, vec3 _destination = vec3(0),
 							vec3 _rotate_center = vec3(0), vec3 _axis = vec3(0), float _current_theta = 0 )
 {
 	block_t temp;
@@ -47,12 +53,13 @@ inline block_t init_block( vec3 _center, Block_Type _type = Stop_Block, int _sw 
 	temp.center	= _center;
 	temp.type	= _type;
 	// Change Block's Common Variables. (Change Block = Rotate_Block | Move_Block | Elevate_Block)
-	temp.sw		= _sw;
-	temp.diff	= _diff;
+	temp.sw				= _sw;
+	temp.destination	= _destination;
+	temp.diff			= _destination - _center;
 	if (_type == Rotate_Block)
 		temp.dis = distance(_center, _rotate_center);
 	else if (_type == Move_Block)
-		temp.dis = distance(_center, _diff);
+		temp.dis = distance(_center, _destination);
 	else
 		temp.dis = 0;
 	// "Rotate_Block" Variables.
@@ -73,7 +80,7 @@ inline std::vector<block_t> create_blocks0()
 	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, -1 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, +0 * block_size, +2 * block_size)));
-	// Main Road for Character.
+	// Starting Main Road.
 	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +2 * block_size)));
@@ -81,13 +88,7 @@ inline std::vector<block_t> create_blocks0()
 	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +1 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +0 * block_size)));
-	// Destination of the Block Rotation.
-	//blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -1 * block_size)));
-	//blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -2 * block_size)));
-	//blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -3 * block_size)));
-	// Main Road for Character to the 'Goal'.
-	blocks.push_back(init_block(vec3(-4 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(-5 * block_size, -2 * block_size, -3 * block_size)));
+	// Main Road to the Goal.
 	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -2 * block_size)));
 	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -1 * block_size)));
@@ -97,45 +98,96 @@ inline std::vector<block_t> create_blocks0()
 inline std::vector<block_t> create_rotate_blocks0()
 {
 	std::vector<block_t> blocks;
-	//vec3 rotating_center = vec3(+2 * block_size, +3 * block_size, +2 * block_size);
-	//vec3 ex = vec3(+2 * block_size, +4 * block_size, +2 * block_size);
-	//float current = atan((rotating_center - ex).z / (rotating_center - ex).y);
-
+	// Rotate_Blocks to the Goal.
 	blocks.push_back(init_block(
 		vec3(+2 * block_size, +1 * block_size, +2 * block_size), Rotate_Block, 3,
-		vec3(-5 * block_size, -5 * block_size, -5 * block_size),
+		vec3(-3 * block_size, -4 * block_size, -3 * block_size),
 		vec3(+2 * block_size, +3 * block_size, +2 * block_size),
 		vec3(1, 0, 0), PI));
 	blocks.push_back(init_block(
 		vec3(+2 * block_size, +2 * block_size, +2 * block_size), Rotate_Block, 3,
-		vec3(-5 * block_size, -5 * block_size, -5 * block_size),
+		vec3(-3 * block_size, -3 * block_size, -3 * block_size),
+		vec3(+2 * block_size, +3 * block_size, +2 * block_size),
+		vec3(1, 0, 0), PI));
+	// Center.
+	blocks.push_back(init_block(
+		vec3(+2 * block_size, +3 * block_size, +2 * block_size), Rotate_Block, 3,
+		vec3(-3 * block_size, -2 * block_size, -3 * block_size),
 		vec3(+2 * block_size, +3 * block_size, +2 * block_size),
 		vec3(1, 0, 0), PI));
 	blocks.push_back(init_block(
-		vec3(+2 * block_size, +3 * block_size, +2 * block_size), Rotate_Block, 3,
-		vec3(-5 * block_size, -5 * block_size, -5 * block_size),
-		vec3(+2 * block_size, +3 * block_size, +2 * block_size),
+		vec3(+1 * block_size, +3 * block_size, +2 * block_size), Rotate_Block, 3,
+		vec3(-4 * block_size, -2 * block_size, -3 * block_size),
+		vec3(+1 * block_size, +3 * block_size, +2 * block_size),
 		vec3(1, 0, 0), PI));
-
+	blocks.push_back(init_block(
+		vec3(+0 * block_size, +3 * block_size, +2 * block_size), Rotate_Block, 3,
+		vec3(-5 * block_size, -2 * block_size, -3 * block_size),
+		vec3(+0 * block_size, +3 * block_size, +2 * block_size),
+		vec3(1, 0, 0), PI));
 	return blocks;
 }
 
 inline std::vector<block_t> create_blocks1()
 {
 	std::vector<block_t> blocks;
-
+	// Starting Main Road.
 	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +1 * block_size)));
 	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +0 * block_size)));
-	
-	if (eye_change != 1)
-		blocks.push_back(init_block(vec3(+0 * block_size, -3 * block_size, -2 * block_size)));
-	else
-		blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, -1 * block_size)));
+	// Right-Side Road.
+	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(+3 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(+4 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(+4 * block_size, -2 * block_size, -4 * block_size)));
+	blocks.push_back(init_block(vec3(+4 * block_size, -2 * block_size, -5 * block_size)));
+	// Left-Side Road.
+	blocks.push_back(init_block(vec3(-4 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-5 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -2 * block_size)));
+	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -1 * block_size)));
+	// Main Road to the Goal.
+	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, -6 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, -7 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, -8 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -8 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -8 * block_size)));
+	return blocks;
+}
 
+inline std::vector<block_t> create_rotate_blocks1()
+{
+	std::vector<block_t> blocks;
+	blocks.push_back(init_block(
+		vec3(-1 * block_size, -2 * block_size, -1 * block_size), Rotate_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), 0));
+	blocks.push_back(init_block(
+		vec3(-1 * block_size, -2 * block_size, -2 * block_size), Rotate_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), 0));
+	// Center.
+	blocks.push_back(init_block(
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size), Rotate_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), 0));
+	blocks.push_back(init_block(
+		vec3(-2 * block_size, -2 * block_size, -3 * block_size), Rotate_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), - PI / 2));
+	blocks.push_back(init_block(
+		vec3(-3 * block_size, -2 * block_size, -3 * block_size), Rotate_Block, 4,
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(0, 1, 0), - PI / 2));
 	return blocks;
 }
 
@@ -150,33 +202,9 @@ inline std::vector<block_t> create_blocks2()
 	return blocks;
 }
 
-inline std::vector<block_t> create_rotate_blocks1()
-{
-	std::vector<block_t> blocks;
-	/*
-	blocks.push_back(init_block(
-		vec3(+0 * block_size, -3 * block_size, -2 * block_size),
-		vec3(+0 * block_size, -3 * block_size, -2 * block_size),
-		vec3(-1 * block_size, +1 * block_size, +1 * block_size),
-		vec3(0, 0, 0),
-		0, Move_Block));
-	*/
-	return blocks;
-}
-
 inline std::vector<block_t> create_rotate_blocks2()
 {
 	std::vector<block_t> blocks;
-	/*
-	if (_axis.x > 0.0f)	temp.current_theta = atan((_center - _rotate_center).z / (_center - _rotate_center).y);
-	if (_axis.y > 0.0f)	temp.current_theta = atan((_rotate_center - _center).z / (_rotate_center - _center).x);
-	if (_axis.z > 0.0f)	temp.current_theta = atan((_center - _rotate_center).y / (_center - _rotate_center).x);
-	printf("%f %f %f %f\n", _axis.x, _axis.y, _axis.z, atan((_center - _rotate_center).x / (_center - _rotate_center).z));
-	*/
-	vec3 rotating_center = vec3(+2 * block_size, +3 * block_size, +2 * block_size);
-	vec3 ex = vec3(+2 * block_size, +4 * block_size, +2 * block_size);
-	float current = atan((rotating_center - ex).z / (rotating_center - ex).y);
-
 	return blocks;
 }
 
@@ -207,9 +235,16 @@ inline void block_t::update(float t)
 			}
 			current_theta = current_theta + t;
 			facing_theta = facing_theta + t;
-			if (axis.x > 0.0f)		center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta)) + (diff * cos(facing_theta + PI / 2));
-			else if (axis.y > 0.0f)	center = rotate_center + vec3(dis * sin(current_theta), 0, dis * cos(current_theta)) + (diff * cos(facing_theta + PI / 2));
-			else if (axis.z > 0.0f)	center = rotate_center + vec3(dis * cos(current_theta), dis * sin(current_theta), 0) + (diff * cos(facing_theta + PI / 2));
+			if (axis.x > 0.0f)		center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta));// +(diff * sin(facing_theta));
+			else if (axis.y > 0.0f)	center = rotate_center + vec3(dis * sin(current_theta), 0, dis * cos(current_theta));// +(diff * sin(facing_theta));
+			else if (axis.z > 0.0f)	center = rotate_center + vec3(dis * cos(current_theta), dis * sin(current_theta), 0);// +(diff * sin(facing_theta));
+			if (stage == 0)
+			{
+				if (sw == lever_change || (sw + 1) % lever_state[stage] == lever_change) center += diff * sin(current_theta);
+			}
+			else if (stage == 1)
+			{
+			}
 		}
 		//if it finished rotating
 		else {
@@ -221,7 +256,7 @@ inline void block_t::update(float t)
 	}
 	else if (type == Move_Block)
 	{
-
+		center += diff * t;
 		model_matrix = mat4::translate(center)
 			* mat4::scale(size, size, size);
 	}

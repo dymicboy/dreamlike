@@ -22,7 +22,6 @@ GLuint	trigger_vertex_array_x = 0;	// ID holder for trigger vertex array object
 GLuint	trigger_vertex_array_y = 0;	// ID holder for trigger vertex array object
 GLuint	trigger_vertex_array_z = 0;	// ID holder for trigger vertex array object
 
-#define	TOTAL_STAGE	(5)
 std::vector<block_t> blocks[TOTAL_STAGE];				// 5개 스테이지, 기본 블럭
 std::vector<block_t> rotate_blocks[TOTAL_STAGE][3];		// 5개 스테이지, 최대 3개의 rotating group
 std::vector<trigger_t> triggers[TOTAL_STAGE];			// 5개 스테이지, triggers group
@@ -39,7 +38,6 @@ float	default_camera_zoom = 1.0f;
 float	camera_zoom0 = default_camera_zoom;
 float	camera_zoom = default_camera_zoom;
 float	stage_change_t = 0.0f;
-int		stage = 0;
 int		next_stage = 0;
 
 bool up_pressed = 0;
@@ -266,8 +264,9 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		if (key == GLFW_KEY_SPACE)
 			for (auto& s : characters[stage]) s.spacebar_button();
 		if (key == GLFW_KEY_R) {
-			if (lever_activate == 0) {
+			if (lever_activate == 0 && lever_state[stage] != 0) {
 				lever_activate = 1;
+				lever_change = (lever_change + 1) % lever_state[stage];
 				for (auto& s : rotate_blocks[stage][0])
 					s.block_rotation(PI / 2);
 			}
@@ -301,9 +300,10 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		}
 		if (key == GLFW_KEY_M)
 		{
-			if (lever_activate == 0) {
+			if (lever_activate == 0 && eye_state[stage] != 0) {
 				lever_activate = 1;
 				cam.target_theta = cam.current_theta + PI / 2.0f;
+				eye_change = (eye_change + 1) % eye_state[stage];
 			}
 		}
 	}

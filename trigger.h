@@ -34,34 +34,26 @@ inline trigger_t init_trigger(vec3 _center, int _status_num = 0, int _floor = 0,
 inline std::vector<trigger_t> create_triggers0()
 {
 	std::vector<trigger_t> triggers;
-
 	//z-axis test 
 	//triggers.push_back(init_trigger(vec3(+2 * trigger_size, -2 * trigger_size, -2 * trigger_size), 4, 0));
 	//x-axis test 
 	//triggers.push_back(init_trigger(vec3(+2 * block_size, +3 * block_size, +0 * block_size), 4, 1));
 	//y-axis test 
-	triggers.push_back(init_trigger(vec3(-1 * block_size, -2 * block_size, +2 * block_size), 4, 2));
-	
+	triggers.push_back(init_trigger(vec3(-6 * block_size, -2 * block_size, -1 * block_size), 4, 2));
 	return triggers;
 }
 
 inline std::vector<trigger_t> create_triggers1()
 {
 	std::vector<trigger_t> triggers;
-
-	//y-axis test 
-	triggers.push_back(init_trigger(vec3(-1 * block_size, -2 * block_size, +2 * block_size), 4, 2));
-
+	triggers.push_back(init_trigger(vec3(-3 * block_size, -2 * block_size, -8 * block_size), 4, 2));
 	return triggers;
 }
 
 inline std::vector<trigger_t> create_triggers2()
 {
 	std::vector<trigger_t> triggers;
-
-	//y-axis test 
 	triggers.push_back(init_trigger(vec3(-1 * block_size, -2 * block_size, +2 * block_size), 4, 2));
-
 	return triggers;
 }
 
