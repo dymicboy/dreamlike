@@ -26,7 +26,7 @@ struct block_t
 	vec3	center		= vec3(0);		// 3D position for translation
 	float	size		= block_size;	// size
 	mat4	model_matrix;					// modeling transformation
-	Block_Type	type	= Stop_Block;s
+	Block_Type	type	= Stop_Block;
 	// Change Block's Common Variables. (Change Block = Rotate_Block | Move_Block | Elevate_Block)
 	int		sw			= 0;
 	vec3	destination = vec3(0);

@@ -136,13 +136,13 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 				//if block is on next x axis
 				if (abs(next_location.x - s.center.x) < character_size + s.size / 2 &&
 					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
-					next_location.z + 0.001f > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2) {
+					next_location.z + 0.01f > s.center.z - s.size / 2 && next_location.z + 0.01f < s.center.z + s.size / 2) {
 					next_location.x = location.x;
 				}
 				//if block is on next y axis
 				if (abs(next_location.y - s.center.y) < character_size + s.size / 2 &&
 					next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
-					next_location.z + 0.001f > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2) {
+					next_location.z + 0.01f > s.center.z - s.size / 2 && next_location.z + 0.01f < s.center.z + s.size / 2) {
 					next_location.y = location.y;
 				}
 				//if it's landed on the floor
@@ -160,13 +160,13 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 				//if block is on next z axis
 				if (abs(next_location.z - s.center.z) < character_size + s.size / 2 &&
 					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
-					next_location.x + 0.001f > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2) {
+					next_location.x + 0.01f > s.center.x - s.size / 2 && next_location.x + 0.01f < s.center.x + s.size / 2) {
 					next_location.z = location.z;
 				}
 				//if block is on next y axis
 				if (abs(next_location.y - s.center.y) < character_size + s.size / 2 &&
 					next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
-					next_location.x + 0.001f > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2) {
+					next_location.x + 0.01f > s.center.x - s.size / 2 && next_location.x + 0.01f < s.center.x + s.size / 2) {
 					next_location.y = location.y;
 				}
 				//if it's landed on the floor
@@ -184,19 +184,21 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 				//if block is on next x axis
 				if (abs(next_location.x - s.center.x) < character_size + s.size / 2 &&
 					next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
-					next_location.y + 0.001f > s.center.y - s.size / 2 && next_location.y < s.center.y + s.size / 2) {
+					next_location.y + 0.01f > s.center.y - s.size / 2 && next_location.y + 0.01f < s.center.y + s.size / 2) {
+					printf("%f %f\n", next_location.x, location.x);
 					next_location.x = location.x;
 				}
 				//if block is on next z axis
 				if (abs(next_location.z - s.center.z) < character_size + s.size / 2 &&
 					next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
-					next_location.y + 0.001f > s.center.y - s.size / 2 && next_location.y < s.center.y + s.size / 2) {
+					next_location.y + 0.01f > s.center.y - s.size / 2 && next_location.y + 0.01f < s.center.y + s.size / 2) {
+					printf("%f %f\n", next_location.z, location.z);
 					next_location.z = location.z;
 				}
 				//if it's landed on the floor
 				if (next_location.x > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2 &&
 					next_location.z > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2 &&
-					abs(next_location.y - s.center.y) <= (s.size / 2) + 0.01) {
+					abs(next_location.y - s.center.y) <= (s.size / 2) + 0.01f) {
 					falling = min(0, falling);
 					onfloor = true;
 					next_location.y = s.size / 2 + s.center.y;
