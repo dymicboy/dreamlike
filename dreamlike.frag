@@ -22,18 +22,19 @@ uniform vec4	Ka, Kd, Ks;					// material properties
 uniform sampler2D TEX;
 uniform bool use_texture;
 
-vec3 CalcDirLight(vec4 position, vec4 Ia, vec4 Id, vec4 Is, vec3 normal, vec3 viewDir)
+vec3 CalcDirLight(vec3 position, vec3 Ia, vec3 Id, vec3 Is, vec3 normal, vec3 viewDir)
 {
-	vec3 lightDir = normalize(-light.direction);
+	vec3 lightDir = normalize(-position);
 	// diffuse shading
 	float diff = max(dot(normal, lightDir), 0.0);
 	// specular shading
 	vec3 reflectDir = reflect(-lightDir, normal);
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
 	// combine results
-	vec3 ambient = Ia * vec3(texture(material.diffuse, TexCoords));
-	vec3 diffuse = Id * diff * vec3(texture(material.diffuse, TexCoords));
-	vec3 specular = Is * spec * vec3(texture(material.specular, TexCoords));
+
+	vec3 ambient = Ia * Kd.xyz;
+	vec3 diffuse = Id * diff * Kd.xyz;
+	vec3 specular = Is * spec * Ks.xyz;
 	return (ambient + diffuse + specular);
 }
 
@@ -74,7 +75,7 @@ void main()
 	h = normalize(l + v);	// the halfway vector
 	iKd = texture(TEX, tc);	// Kd from image
 
-	vec4 temp = phong(l, n, h, iKd, top_Ia, top_Id, top_Is) + phong(l, n, h, iKd, left_Ia, left_Id, left_Is);
-	//vec4 temp = CalcDirLight(l, n, h, iKd, top_Ia, top_Id, top_Is) + CalcDirLight(l, n, h, iKd, left_Ia, left_Id, left_Is);
+	//vec4 temp = phong(l, n, h, iKd, top_Ia, top_Id, top_Is) + phong(l, n, h, iKd, left_Ia, left_Id, left_Is);
+	vec3 temp = CalcDirLight(l, top_Ia.xyz, top_Id.xyz, top_Is.xyz, n, v) + CalcDirLight(l, left_Ia.xyz, left_Id.xyz, left_Is.xyz, n, v);
 	fragColor = use_texture ? texture( TEX, tc ) : vec4(temp.x * norm.x, temp.y * norm.y, temp.z * norm.z, 1);
 }

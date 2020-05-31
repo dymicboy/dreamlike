@@ -93,7 +93,7 @@ struct back_t
 
 struct light_t
 {
-	vec4	position = vec4(+0.0f, +100.0f, +0.0f, 0.0f);   // directional light
+	vec4	position = vec4(+0.0f, -100.0f, +0.0f, 0.0f);   // directional light
 	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -806,7 +806,7 @@ bool user_init()
 
 	stage = 3;
 
-	light_left.position = vec4(+10000.0f, 0.0f, 0.0f, 0.0f);
+	light_left.position = vec4(-100.0f, 0.0f, 0.0f, 1.0f);
 
 	return true;
 }
