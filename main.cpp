@@ -125,7 +125,8 @@ int		frame = 0;				// index of rendering frames
 mesh*		pMesh = nullptr;
 camera		cam;
 back_t		back;
-light_t		light;
+light_t		light_top;
+light_t		light_left;
 material_t	material;
 
 // utility function
@@ -214,10 +215,15 @@ void update()
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
 
 	// setup light properties
-	glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
-	glUniform4fv(glGetUniformLocation(program, "Ia"), 1, light.ambient);
-	glUniform4fv(glGetUniformLocation(program, "Id"), 1, light.diffuse);
-	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
+	glUniform4fv(glGetUniformLocation(program, "light_top_position"), 1, light_top.position);
+	glUniform4fv(glGetUniformLocation(program, "top_Ia"), 1, light_top.ambient);
+	glUniform4fv(glGetUniformLocation(program, "top_Id"), 1, light_top.diffuse);
+	glUniform4fv(glGetUniformLocation(program, "top_Is"), 1, light_top.specular);
+
+	glUniform4fv(glGetUniformLocation(program, "light_left_position"), 1, light_left.position);
+	glUniform4fv(glGetUniformLocation(program, "left_Ia"), 1, light_left.ambient);
+	glUniform4fv(glGetUniformLocation(program, "left_Id"), 1, light_left.diffuse);
+	glUniform4fv(glGetUniformLocation(program, "left_Is"), 1, light_left.specular);
 
 	// setup material properties
 	glUniform4fv(glGetUniformLocation(program, "Ka"), 1, material.ambient);
@@ -778,6 +784,8 @@ bool user_init()
 	stage_camera_zoom[3] = 1.5f;
 
 	stage = 3;
+
+	light_left.position = vec4(+10000.0f, 0.0f, 0.0f, 0.0f);
 
 	return true;
 }

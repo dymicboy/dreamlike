@@ -6,7 +6,7 @@
 #endif
 
 // input from vertex shader
-	in vec4 epos;
+in vec4 epos;
 in vec3 norm;
 in vec2 tc;
 
@@ -15,13 +15,29 @@ out vec4 fragColor;
 
 uniform mat4	view_matrix;
 uniform float	shininess;
-uniform vec4	light_position, Ia, Id, Is;	// light
+uniform vec4	light_top_position, top_Ia, top_Id, top_Is;	// top light
+uniform vec4	light_left_position, left_Ia, left_Id, left_Is;	// top light
 uniform vec4	Ka, Kd, Ks;					// material properties
 
 uniform sampler2D TEX;
 uniform bool use_texture;
 
-vec4 phong(vec3 l, vec3 n, vec3 h, vec4 Kd)
+vec3 CalcDirLight(vec4 position, vec4 Ia, vec4 Id, vec4 Is, vec3 normal, vec3 viewDir)
+{
+	vec3 lightDir = normalize(-light.direction);
+	// diffuse shading
+	float diff = max(dot(normal, lightDir), 0.0);
+	// specular shading
+	vec3 reflectDir = reflect(-lightDir, normal);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+	// combine results
+	vec3 ambient = Ia * vec3(texture(material.diffuse, TexCoords));
+	vec3 diffuse = Id * diff * vec3(texture(material.diffuse, TexCoords));
+	vec3 specular = Is * spec * vec3(texture(material.specular, TexCoords));
+	return (ambient + diffuse + specular);
+}
+
+vec4 phong(vec3 l, vec3 n, vec3 h, vec4 Kd, vec4 Ia, vec4 Id, vec4 Is)
 {
 	vec4 Ira = Ka * Ia;											// ambient reflection
 	vec4 Ird = max(Kd * dot(l, n) * Id, 0.0);						// diffuse reflection
@@ -40,19 +56,25 @@ void main()
 {
 	//fragColor = vec4(norm,1);
 	// light position in the eye space
-	vec4 lpos = view_matrix * light_position;
+	vec4 lpos = view_matrix * light_top_position;
 
 	vec3 n = normalize(norm);	// norm interpolated via rasterizer should be normalized again here
 	vec3 p = epos.xyz;			// 3D position of this fragment
 	vec3 l = normalize(lpos.xyz - (lpos.a == 0.0 ? vec3(0) : p));	// lpos.a==0 means directional light
 	vec3 v = normalize(-p);		// eye-epos = vec3(0)-epos
 	vec3 h = normalize(l + v);	// the halfway vector
-
 	vec4 iKd = texture(TEX, tc);	// Kd from image
-	//if (mode == 0)			fragColor = phong(l, n, h, iKd);
-	//else if (mode == 1)	fragColor = phong(l, n, h, Kd);
-	//else if (mode == 2)	fragColor = iKd;
-	//else				fragColor = vec4(tc, 0, 1);
-	vec4 temp = phong(l, n, h, iKd);
+
+	lpos = view_matrix * light_left_position;
+
+	n = normalize(norm);	// norm interpolated via rasterizer should be normalized again here
+	p = epos.xyz;			// 3D position of this fragment
+	l = normalize(lpos.xyz - (lpos.a == 0.0 ? vec3(0) : p));	// lpos.a==0 means directional light
+	v = normalize(-p);		// eye-epos = vec3(0)-epos
+	h = normalize(l + v);	// the halfway vector
+	iKd = texture(TEX, tc);	// Kd from image
+
+	vec4 temp = phong(l, n, h, iKd, top_Ia, top_Id, top_Is) + phong(l, n, h, iKd, left_Ia, left_Id, left_Is);
+	//vec4 temp = CalcDirLight(l, n, h, iKd, top_Ia, top_Id, top_Is) + CalcDirLight(l, n, h, iKd, left_Ia, left_Id, left_Is);
 	fragColor = use_texture ? texture( TEX, tc ) : vec4(temp.x * norm.x, temp.y * norm.y, temp.z * norm.z, 1);
 }

@@ -396,20 +396,6 @@ inline void block_t::update(float t)
 				if (axis.x > 0.0f)		center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta));// +(diff * sin(facing_theta));
 				else if (axis.y > 0.0f)	center = rotate_center + vec3(dis * sin(current_theta), 0, dis * cos(current_theta));// +(diff * sin(facing_theta));
 				else if (axis.z > 0.0f)	center = rotate_center + vec3(dis * cos(current_theta), dis * sin(current_theta), 0);// +(diff * sin(facing_theta));
-				/*
-				if (sw == lever_change)
-				{
-					center			+= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
-					rotate_center	+= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
-					destination		+= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
-				}
-				else if (lever_change == lever_state[stage] - 1)
-				{
-					center			-= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
-					rotate_center	-= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
-					destination		-= vec3(+0 * block_size, 3 * block_size * sin(current_theta), +0 * block_size);
-				}
-				*/
 			}
 			else if (stage == 3)
 			{
@@ -420,7 +406,7 @@ inline void block_t::update(float t)
 				if (axis.x > 0.0f)
 				{
 					if (sw == 0)	center = rotate_center + vec3(0, dis * cos(-current_theta), dis * sin(-current_theta));
-					else			center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta));
+					else			center = rotate_center + vec3(0, dis * cos(current_theta - PI / 2), dis * sin(current_theta - PI / 2));
 				}
 				else if (axis.z > 0.0f)
 				{
