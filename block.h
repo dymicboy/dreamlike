@@ -7,7 +7,6 @@ int		stage = 0;
 int		eye_change = 0;
 int		eye_state[TOTAL_STAGE] = { 0, 0, 4, 4, 0 };
 int		lever_change = 0;
-int		lever_state[TOTAL_STAGE] = { 4, 8, 0, 4, 0 };
 int		rotate_blocks_cnt[TOTAL_STAGE] = { 1, 1, 1, 4, 0 };
 int		triggers_cnt[TOTAL_STAGE] = { 2, 2, 12, 4, 0 };
 float	block_size = 0.5f;
@@ -385,7 +384,7 @@ inline void block_t::update(float t)
 				if (axis.x > 0.0f)		center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta));// +(diff * sin(facing_theta));
 				else if (axis.y > 0.0f)	center = rotate_center + vec3(dis * sin(current_theta), 0, dis * cos(current_theta));// +(diff * sin(facing_theta));
 				else if (axis.z > 0.0f)	center = rotate_center + vec3(dis * cos(current_theta), dis * sin(current_theta), 0);// +(diff * sin(facing_theta));
-				if (sw == lever_change || (sw + 1) % lever_state[stage] == lever_change) center += diff * sin(current_theta);
+				if (sw == lever_change || (sw + 1) % 4 == lever_change) center += diff * sin(current_theta);
 			}
 			else if (stage == 1)
 			{

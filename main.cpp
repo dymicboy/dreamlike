@@ -333,7 +333,7 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			for (auto& s : characters[stage]) s.spacebar_button();
 
 		if (key == GLFW_KEY_R) {
-			if (lever_activate == 0 && lever_state[stage] != 0) {
+			if (lever_activate == 0) {
 				bool triger_on = false;
 				for (int i = 0; i < 5; i++) {
 					for (auto& trig : triggers[stage][i]) {
@@ -355,7 +355,6 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 					if (triger_on) {
 						printf("Trigged! Sound plz!\n");
 						lever_activate = 1;
-						lever_change = (lever_change + 1) % lever_state[stage];
 						// 설명
 						// if (stage == 스테이지 && i == 트리거번호) 동작 : for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
 						if (stage == 0)
@@ -826,7 +825,7 @@ bool user_init()
 	obstacles[stage].push_back(&rotate_blocks[stage][3]);
 	stage_camera_zoom[3] = 1.5f;
 
-	stage = 3;
+	stage = 0;
 
 
 	engine = irrklang::createIrrKlangDevice();
