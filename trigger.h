@@ -137,7 +137,7 @@ inline std::vector<trigger_t> create_triggers2_8()
 {
 	std::vector<trigger_t> triggers;
 	// Top.
-	triggers.push_back(init_trigger(vec3(+2 * block_size, +2 * block_size, +2 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(+2 * block_size, +2 * block_size, +2 * block_size), 4, 1));
 	return triggers;
 }
 
@@ -145,7 +145,7 @@ inline std::vector<trigger_t> create_triggers2_9()
 {
 	std::vector<trigger_t> triggers;
 	// Top.
-	triggers.push_back(init_trigger(vec3(-3 * block_size, +2 * block_size, +2 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(-3 * block_size, +2 * block_size, +2 * block_size), 4, 0));
 	return triggers;
 }
 
@@ -153,7 +153,7 @@ inline std::vector<trigger_t> create_triggers2_10()
 {
 	std::vector<trigger_t> triggers;
 	// Top.
-	triggers.push_back(init_trigger(vec3(-3 * block_size, +2 * block_size, -3 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(-3 * block_size, +2 * block_size, +2 * block_size), 4, 2));
 	return triggers;
 }
 

@@ -344,7 +344,7 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			engine->play2D(cat_mp3_src);
 			if (lever_activate == 0) {
 				bool triger_on = false;
-				for (int i = 0; i < 5; i++) {
+				for (int i = 0; i < triggers_cnt[stage]; i++) {
 					for (auto& trig : triggers[stage][i]) {
 						for (auto& hero : characters[stage]) {
 							if (hero.location.z <= trig.center.z + trig.size/2 && 
@@ -378,35 +378,18 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 						}
 						else if (stage == 2)
 						{
-							if (i == 0)
-							{
-								for (auto& s : characters[stage]) s.location = vec3(+1 * block_size, -3 * block_size, -3 * block_size);
-							}
-							else if (i == 1)	for (auto& s : rotate_blocks[stage][1]) s.block_rotation(PI / 2);
-							else if (i == 2)	for (auto& s : rotate_blocks[stage][2]) s.block_rotation(PI / 2);
-							else if (i == 3)	for (auto& s : rotate_blocks[stage][3]) s.block_rotation(PI / 2);
-							else if (i == 4)	for (auto& s : rotate_blocks[stage][4]) s.block_rotation(PI / 2);
-							else if (i == 5)	for (auto& s : rotate_blocks[stage][5]) s.block_rotation(PI / 2);
-							else if (i == 6)
-							{
-								for (auto& s : characters[stage])
-								{
-									s.location = vec3(+1 * block_size, -3 * block_size, -3 * block_size);
-									s.update(t, obstacles[stage]);
-								}
-							}
-							else if (i == 7)
-							{
-								for (auto& s : characters[stage])
-								{
-									s.location = vec3(+1 * block_size, -3 * block_size, -3 * block_size);
-									s.update(t, obstacles[stage]);
-								}
-							}
-							else if (i == 8)	for (auto& s : rotate_blocks[stage][8]) s.block_rotation(PI / 2);
-							else if (i == 9)	for (auto& s : rotate_blocks[stage][9]) s.block_rotation(PI / 2);
-							else if (i == 10)	for (auto& s : rotate_blocks[stage][10]) s.block_rotation(PI / 2);
-							else if (i == 11)	for (auto& s : rotate_blocks[stage][11]) s.block_rotation(PI / 2);
+							if (i == 0)			for (auto& s : characters[stage]) { s.location = vec3(-2 * block_size, -2 * block_size, -3 * block_size); s.update(t, obstacles[stage]); }
+							else if (i == 1)	for (auto& s : characters[stage]) { s.location = vec3(-3 * block_size, -2 * block_size, -2 * block_size); s.update(t, obstacles[stage]); }
+							else if (i == 2)	for (auto& s : characters[stage]) { s.location = vec3(+3 * block_size, -3 * block_size, -3 * block_size); s.floor = 1; s.update(t, obstacles[stage]); }
+							else if (i == 3)	for (auto& s : characters[stage]) { s.location = vec3(+2 * block_size, -2 * block_size, +1 * block_size); s.update(t, obstacles[stage]); }
+							else if (i == 4)	for (auto& s : characters[stage]) { s.location = vec3(+2 * block_size, -2 * block_size, -2 * block_size); s.update(t, obstacles[stage]); }
+							else if (i == 5)	for (auto& s : characters[stage]) { s.location = vec3(+1 * block_size, -2 * block_size, +2 * block_size); s.update(t, obstacles[stage]); }
+							else if (i == 6)	for (auto& s : characters[stage]) { s.location = vec3(+0 * block_size, +0 * block_size, +1 * block_size); s.update(t, obstacles[stage]); }
+							else if (i == 7)	for (auto& s : characters[stage]) { s.location = vec3(-3 * block_size, -2 * block_size, +1 * block_size); s.update(t, obstacles[stage]); }
+							else if (i == 8)	for (auto& s : characters[stage]) { s.location = vec3(+2 * block_size, -3 * block_size, +3 * block_size); s.floor = 0; s.update(t, obstacles[stage]); }
+							else if (i == 9)	for (auto& s : characters[stage]) { s.location = vec3(-3 * block_size, +3 * block_size, +2 * block_size); s.floor = 2; s.update(t, obstacles[stage]); }
+							else if (i == 10)	for (auto& s : characters[stage]) { s.location = vec3(+2 * block_size, -3 * block_size, +3 * block_size); s.floor = 0; s.update(t, obstacles[stage]); }
+							else if (i == 11)	goto_next_stage();
 						}
 						else if (stage == 3)
 						{
@@ -834,8 +817,7 @@ bool user_init()
 	obstacles[stage].push_back(&rotate_blocks[stage][3]);
 	stage_camera_zoom[3] = 1.5f;
 
-	stage = 0;
-
+	stage = 2;
 
 	engine = irrklang::createIrrKlangDevice();
 	if (!engine) return false;
