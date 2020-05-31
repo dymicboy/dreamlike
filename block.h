@@ -434,7 +434,15 @@ inline void block_t::update(float t)
 		{
 			rotate_flag = false;
 			if (stage == 3)
-				sw = (sw + 2) % 4;
+			{
+				sw += 2;
+				if (sw >= 4)
+				{
+					current_theta += PI;
+					target_theta += PI;
+					sw %= 4;
+				}
+			}
 		}
 		else {
 			rotate_flag = false;
