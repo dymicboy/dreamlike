@@ -36,7 +36,6 @@ float	t = 0.0f;
 float	default_camera_zoom = 1.0f;
 float	camera_zoom0 = default_camera_zoom;
 float	camera_zoom = default_camera_zoom;
-float	stage_camera_zoom[5] = {};
 float	stage_change_t = 0.0f;
 int		next_stage = 0;
 
@@ -88,7 +87,7 @@ struct back_t
 	float	target_theta = PI / 4.0f;
 	mat4	model_matrix = mat4::translate(location)	// rotation around sun
 		* mat4::rotate(vec3(0,0,1), -PI / 4)
-		* mat4::scale(300);
+		* mat4::scale(5);
 };
 
 struct light_t
@@ -179,9 +178,9 @@ void update()
 			stage = next_stage;
 			stage_change_t = stage_change_t - t;
 			camera_zoom -= stage_change_t * stage_change_t/10;
-			if (camera_zoom <= stage_camera_zoom[stage]) {
+			if (camera_zoom <= default_camera_zoom) {
 				stage_change = 0;
-				camera_zoom = stage_camera_zoom[stage];
+				camera_zoom = default_camera_zoom;
 			}
 		}
 	}
@@ -305,7 +304,6 @@ void goto_next_stage() {
 	next_stage = (stage + 1) % 4;//TOTAL_STAGE;
 	stage_change = 1;
 	stage_change_t = 1.5f;
-	
 	printf("stage : %d\n", next_stage);
 }
 
@@ -599,9 +597,9 @@ void create_back_vertex_array()
 	
 
 	vertices.push_back({ vec3(-1,0,-1), vec3(0), vec2(0,0) });
-	vertices.push_back({ vec3(1,0,-1), vec3(0), vec2(200,0) });
-	vertices.push_back({ vec3(1,0,1), vec3(0), vec2(200,200) });
-	vertices.push_back({ vec3(-1,0,1), vec3(0), vec2(0,200) });
+	vertices.push_back({ vec3(1,0,-1), vec3(0), vec2(10,0) });
+	vertices.push_back({ vec3(1,0,1), vec3(0), vec2(10,1) });
+	vertices.push_back({ vec3(-1,0,1), vec3(0), vec2(0,10) });
 
 	indices.push_back(0); indices.push_back(3); indices.push_back(1);
 	indices.push_back(1); indices.push_back(3); indices.push_back(2);
@@ -732,7 +730,6 @@ bool user_init()
 	characters[stage]			= std::move(create_characters0());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
-	stage_camera_zoom[0] = 1.0f;
 
 	// Stage 1.
 	stage = 1;
@@ -742,7 +739,6 @@ bool user_init()
 	characters[stage]			= std::move(create_characters1());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
-	stage_camera_zoom[1] = 1.0f;
 
 	// Stage 2.
 	stage = 2;
@@ -752,7 +748,6 @@ bool user_init()
 	characters[stage] = std::move(create_characters2());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
-	stage_camera_zoom[2] = 1.0f;
 
 	// Stage 3.
 	stage = 3;
@@ -768,7 +763,6 @@ bool user_init()
 	characters[stage] = std::move(create_characters3());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
-	stage_camera_zoom[3] = 1.5f;
 
 	stage = 3;
 
