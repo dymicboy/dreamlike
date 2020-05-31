@@ -9,7 +9,7 @@ int		eye_state[TOTAL_STAGE] = { 0, 0, 4, 4, 0 };
 int		lever_change = 0;
 int		lever_state[TOTAL_STAGE] = { 4, 8, 0, 4, 0 };
 int		rotate_blocks_cnt[TOTAL_STAGE] = { 1, 1, 1, 4, 0 };
-int		triggers_cnt[TOTAL_STAGE] = { 1, 1, 1, 4, 0 };
+int		triggers_cnt[TOTAL_STAGE] = { 2, 2, 12, 4, 0 };
 float	block_size = 0.5f;
 
 enum Block_Type : int
@@ -79,21 +79,21 @@ inline std::vector<block_t> create_blocks0()
 {
 	std::vector<block_t> blocks;
 	// Connected to 'Rotate Block'.
-	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, -1 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, +0 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+3 * block_size, -2 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(+3 * block_size, -1 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(+3 * block_size, +0 * block_size, +1 * block_size)));
 	// Starting Main Road.
-	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +1 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +0 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, +0 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -1 * block_size)));
 	// Main Road to the Goal.
-	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -2 * block_size)));
-	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -1 * block_size)));
+	blocks.push_back(init_block(vec3(-5 * block_size, -2 * block_size, -4 * block_size)));
+	blocks.push_back(init_block(vec3(-5 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-5 * block_size, -2 * block_size, -2 * block_size)));
 	return blocks;
 }
 
@@ -102,30 +102,30 @@ inline std::vector<block_t> create_rotate_blocks0()
 	std::vector<block_t> blocks;
 	// Rotate_Blocks to the Goal.
 	blocks.push_back(init_block(
-		vec3(+2 * block_size, +1 * block_size, +2 * block_size), Rotate_Block, 3,
-		vec3(-3 * block_size, -4 * block_size, -3 * block_size),
-		vec3(+2 * block_size, +3 * block_size, +2 * block_size),
+		vec3(+3 * block_size, +1 * block_size, +1 * block_size), Rotate_Block, 0,
+		vec3(-2 * block_size, -4 * block_size, -4 * block_size),
+		vec3(+3 * block_size, +3 * block_size, +1 * block_size),
 		vec3(1, 0, 0), PI));
 	blocks.push_back(init_block(
-		vec3(+2 * block_size, +2 * block_size, +2 * block_size), Rotate_Block, 3,
-		vec3(-3 * block_size, -3 * block_size, -3 * block_size),
-		vec3(+2 * block_size, +3 * block_size, +2 * block_size),
+		vec3(+3 * block_size, +2 * block_size, +1 * block_size), Rotate_Block, 0,
+		vec3(-2 * block_size, -3 * block_size, -4 * block_size),
+		vec3(+3 * block_size, +3 * block_size, +1 * block_size),
 		vec3(1, 0, 0), PI));
 	// Center.
 	blocks.push_back(init_block(
-		vec3(+2 * block_size, +3 * block_size, +2 * block_size), Rotate_Block, 3,
-		vec3(-3 * block_size, -2 * block_size, -3 * block_size),
-		vec3(+2 * block_size, +3 * block_size, +2 * block_size),
+		vec3(+3 * block_size, +3 * block_size, +1 * block_size), Rotate_Block, 0,
+		vec3(-2 * block_size, -2 * block_size, -4 * block_size),
+		vec3(+3 * block_size, +3 * block_size, +1 * block_size),
 		vec3(1, 0, 0), PI));
 	blocks.push_back(init_block(
-		vec3(+1 * block_size, +3 * block_size, +2 * block_size), Rotate_Block, 3,
-		vec3(-4 * block_size, -2 * block_size, -3 * block_size),
-		vec3(+1 * block_size, +3 * block_size, +2 * block_size),
+		vec3(+2 * block_size, +3 * block_size, +1 * block_size), Rotate_Block, 0,
+		vec3(-3 * block_size, -2 * block_size, -4 * block_size),
+		vec3(+2 * block_size, +3 * block_size, +1 * block_size),
 		vec3(1, 0, 0), PI));
 	blocks.push_back(init_block(
-		vec3(+0 * block_size, +3 * block_size, +2 * block_size), Rotate_Block, 3,
-		vec3(-5 * block_size, -2 * block_size, -3 * block_size),
-		vec3(+0 * block_size, +3 * block_size, +2 * block_size),
+		vec3(+1 * block_size, +3 * block_size, +1 * block_size), Rotate_Block, 0,
+		vec3(-4 * block_size, -2 * block_size, -4 * block_size),
+		vec3(+1 * block_size, +3 * block_size, +1 * block_size),
 		vec3(1, 0, 0), PI));
 	return blocks;
 }
@@ -134,30 +134,30 @@ inline std::vector<block_t> create_blocks1()
 {
 	std::vector<block_t> blocks;
 	// Starting Main Road.
-	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +1 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +0 * block_size)));
+	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, +3 * block_size)));
+	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, +3 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +3 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, +3 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, +1 * block_size)));
 	// Right-Side Road.
-	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, -2 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, -2 * block_size)));
+	blocks.push_back(init_block(vec3(+3 * block_size, -2 * block_size, -2 * block_size)));
 	blocks.push_back(init_block(vec3(+3 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(+4 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(+4 * block_size, -2 * block_size, -4 * block_size)));
-	blocks.push_back(init_block(vec3(+4 * block_size, -2 * block_size, -5 * block_size)));
+	blocks.push_back(init_block(vec3(+3 * block_size, -2 * block_size, -4 * block_size)));
 	// Left-Side Road.
-	blocks.push_back(init_block(vec3(-4 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(-5 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-5 * block_size, -2 * block_size, -2 * block_size)));
 	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -2 * block_size)));
-	blocks.push_back(init_block(vec3(-6 * block_size, -2 * block_size, -1 * block_size)));
+	blocks.push_back(init_block(vec3(-7 * block_size, -2 * block_size, -2 * block_size)));
+	blocks.push_back(init_block(vec3(-7 * block_size, -2 * block_size, -1 * block_size)));
+	blocks.push_back(init_block(vec3(-7 * block_size, -2 * block_size, +0 * block_size)));
 	// Main Road to the Goal.
-	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, -6 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, -7 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, -8 * block_size)));
-	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -8 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -8 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -5 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -6 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -7 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -7 * block_size)));
+	blocks.push_back(init_block(vec3(-4 * block_size, -2 * block_size, -7 * block_size)));
 	return blocks;
 }
 
@@ -165,30 +165,30 @@ inline std::vector<block_t> create_rotate_blocks1()
 {
 	std::vector<block_t> blocks;
 	blocks.push_back(init_block(
-		vec3(-1 * block_size, -2 * block_size, -1 * block_size), Rotate_Block, 4,
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-2 * block_size, -2 * block_size, +0 * block_size), Rotate_Block, 4,
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
 		vec3(0, 1, 0), 0));
 	blocks.push_back(init_block(
-		vec3(-1 * block_size, -2 * block_size, -2 * block_size), Rotate_Block, 4,
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-2 * block_size, -2 * block_size, -1 * block_size), Rotate_Block, 4,
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
 		vec3(0, 1, 0), 0));
 	// Center.
 	blocks.push_back(init_block(
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size), Rotate_Block, 4,
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size), Rotate_Block, 4,
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
 		vec3(0, 1, 0), 0));
 	blocks.push_back(init_block(
-		vec3(-2 * block_size, -2 * block_size, -3 * block_size), Rotate_Block, 4,
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-3 * block_size, -2 * block_size, -2 * block_size), Rotate_Block, 4,
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
 		vec3(0, 1, 0), - PI / 2));
 	blocks.push_back(init_block(
-		vec3(-3 * block_size, -2 * block_size, -3 * block_size), Rotate_Block, 4,
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
-		vec3(-1 * block_size, -2 * block_size, -3 * block_size),
+		vec3(-4 * block_size, -2 * block_size, -2 * block_size), Rotate_Block, 4,
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
+		vec3(-2 * block_size, -2 * block_size, -2 * block_size),
 		vec3(0, 1, 0), - PI / 2));
 	return blocks;
 }
@@ -197,65 +197,65 @@ inline std::vector<block_t> create_blocks2()
 {
 	std::vector<block_t> blocks;
 	// First Pillar.
-	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, -2 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, -1 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, +0 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, +1 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, +2 * block_size, -2 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, +2 * block_size, -1 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, +2 * block_size, +0 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, +2 * block_size, +1 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, +2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, +1 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, +0 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, -1 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, +1 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, +0 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, -1 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, -2 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, -3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, -3 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, -3 * block_size, +0 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, -3 * block_size, -1 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, -3 * block_size, -2 * block_size)));
 	// Second Pillar.
-	blocks.push_back(init_block(vec3(-2 * block_size, +3 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, +3 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(+0 * block_size, +3 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(+1 * block_size, +3 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(+2 * block_size, +3 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, +2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, +2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(+0 * block_size, +2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(+1 * block_size, +2 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, +2 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, +1 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, +0 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, -1 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(+2 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(+2 * block_size, -3 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(+1 * block_size, -3 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(+0 * block_size, -3 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -3 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -3 * block_size, -3 * block_size)));
 	// Third Pillar.
-	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, +1 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, +0 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, -1 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, -2 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +2 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +2 * block_size, +0 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +2 * block_size, -1 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +2 * block_size, -2 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, +2 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, +1 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, +0 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, -1 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -3 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -2 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -1 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +0 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -3 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -3 * block_size, -2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -3 * block_size, -1 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -3 * block_size, +0 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -3 * block_size, +1 * block_size)));
 	// Fourth Pillar.
-	blocks.push_back(init_block(vec3(+1 * block_size, +3 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+0 * block_size, +3 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, +3 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-2 * block_size, +3 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+1 * block_size, +2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+0 * block_size, +2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, +2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, +2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, +2 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, +1 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, +0 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, -1 * block_size, +2 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, +2 * block_size)));
-	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+0 * block_size, -3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+1 * block_size, -3 * block_size, +2 * block_size)));
 	// Main Road to the Goal.
 	return blocks;
 }
@@ -354,10 +354,7 @@ inline std::vector<block_t> create_rotate_blocks3_3()
 
 inline void block_t::block_rotation(float rotate_angle=0)
 {
-	if (type == Rotate_Block)
-	{
-		target_theta = current_theta + rotate_angle;
-	}
+	target_theta = current_theta + rotate_angle;
 	rotate_flag = true;
 }
 
