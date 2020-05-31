@@ -6,25 +6,26 @@
 float trigger_size = 0.5f;
 struct trigger_t
 {
-	vec3	center			= vec3(0);		// 3D position for translation
-	float	size			= trigger_size;	// size
-	mat4	model_matrix;					// modeling transformation
+	vec3	center			= vec3(0);			// 3D position for translation
+	float	size			= trigger_size;		// size
+	mat4	model_matrix;						// modeling transformation
 	int		status_num		= 0;
 	int		status			= 0;
 	int		floor			= 0;			// 0 = xy floor with z>0, 1 = yz floor with x>0, 2= xz floor with y>0
-	
+	int		shape			= 0;
 	// public functions
 	void	trigger_activate();
 	void	update(float t);
 };
 
-inline trigger_t init_trigger(vec3 _center, int _status_num = 0, int _floor = 0, int _status = 0)
+inline trigger_t init_trigger(vec3 _center, int _status_num = 0, int _floor = 0, int _shape = 0, int _status = 0)
 {
 	trigger_t temp;
 	temp.center = _center;
 	temp.status_num = _status_num;
 	temp.status = _status;
 	temp.floor	= _floor;
+	temp.shape = _shape;
 	if (_floor == 0) temp.center.z += trigger_size / 2 + 0.1f;
 	if (_floor == 1) temp.center.x += trigger_size / 2 + 0.1f;
 	if (_floor == 2) temp.center.y += trigger_size / 2 + 0.1f;

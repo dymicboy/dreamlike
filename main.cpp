@@ -18,13 +18,11 @@ mesh2* catMesh[5];
 
 GLuint	block_vertex_array = 0;	// ID holder for block vertex array object
 
-GLuint	trigger_vertex_array_x = 0;	// ID holder for trigger vertex array object
-GLuint	trigger_vertex_array_y = 0;	// ID holder for trigger vertex array object
-GLuint	trigger_vertex_array_z = 0;	// ID holder for trigger vertex array object
+GLuint	trigger_vertex_array[5][5] = { 0 };	// [shape][floor]
 
 std::vector<block_t> blocks[TOTAL_STAGE];				// 5개 스테이지, 기본 블럭
-std::vector<block_t> rotate_blocks[TOTAL_STAGE][3];		// 5개 스테이지, 최대 3개의 rotating group
-std::vector<trigger_t> triggers[TOTAL_STAGE][3];			// 5개 스테이지, triggers group
+std::vector<block_t> rotate_blocks[TOTAL_STAGE][5];		// 5개 스테이지, 최대 3개의 rotating group
+std::vector<trigger_t> triggers[TOTAL_STAGE][5];			// 5개 스테이지, triggers group
 
 //multiple character use available
 std::vector<character_t>	characters[5];
@@ -45,6 +43,7 @@ bool down_pressed = 0;
 bool left_pressed = 0;
 bool right_pressed = 0;
 bool lever_activate = 0;
+bool cat_jump = 0;
 bool stage_change = 0;
 int	wire_mode = 0;
 
@@ -224,7 +223,8 @@ void render()
 
 	for (auto& s : rotate_blocks[stage][0])
 	{
-		s.update(t);
+		if(cat_jump == 0)
+			s.update(t);
 		if (s.rotate_flag == true) lever_activate = 1;
 		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
 		glDrawElements(GL_TRIANGLES, 6 * 4 * 3, GL_UNSIGNED_INT, nullptr);
@@ -233,9 +233,7 @@ void render()
 	for (auto& s : triggers[stage][0])
 	{
 		s.update(t);
-		if (s.floor == 0) glBindVertexArray(trigger_vertex_array_z);
-		if (s.floor == 1) glBindVertexArray(trigger_vertex_array_x);
-		if (s.floor == 2) glBindVertexArray(trigger_vertex_array_y);
+		glBindVertexArray(trigger_vertex_array[s.shape][s.floor]);
 		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
 		glDrawElements(GL_TRIANGLES, 8 * 3, GL_UNSIGNED_INT, nullptr);
 	}
@@ -255,6 +253,9 @@ void render()
 		// render vertices: trigger shader programs to process vertex data
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh->index_buffer);
 		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+		
+		if (lever_activate && cat_jump && s.falling != 0) s.update(t, obstacles[stage]);
+		else cat_jump = 0;
 
 		if (!lever_activate)
 			s.update(t, obstacles[stage]);
@@ -272,6 +273,13 @@ void reshape( GLFWwindow* window, int width, int height )
 	glViewport( 0, 0, width, height );
 }
 
+void goto_next_stage() {
+	next_stage = (stage + 1) % 3;//TOTAL_STAGE;
+	stage_change = 1;
+	stage_change_t = 1.5f;
+	printf("stage : %d\n", next_stage);
+}
+
 void print_help()
 {
 	printf( "[help]\n" );
@@ -283,7 +291,7 @@ void print_help()
 
 void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
-	if(action==GLFW_PRESS)
+	if(action==GLFW_PRESS && !cat_jump && !lever_activate)
 	{
 		if (key == GLFW_KEY_UP)
 			for (auto& s : characters[stage]) s.front_button(1);
@@ -295,12 +303,39 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			for (auto& s : characters[stage]) s.right_button(1);
 		if (key == GLFW_KEY_SPACE)
 			for (auto& s : characters[stage]) s.spacebar_button();
+
 		if (key == GLFW_KEY_R) {
 			if (lever_activate == 0 && lever_state[stage] != 0) {
-				lever_activate = 1;
-				lever_change = (lever_change + 1) % lever_state[stage];
-				for (auto& s : rotate_blocks[stage][0])
-					s.block_rotation(PI / 2);
+				bool triger_on = false;
+				for (int i = 0; i < 5; i++) {
+					for (auto& trig : triggers[stage][i]) {
+						for (auto& hero : characters[stage]) {
+							if (hero.location.z <= trig.center.z + trig.size/2 && 
+								hero.location.z >= trig.center.z - trig.size/2 &&
+								hero.location.y <= trig.center.y + trig.size/2 &&
+								hero.location.y >= trig.center.y - trig.size/2 &&
+								hero.location.x <= trig.center.x + trig.size/2 &&
+								hero.location.x >= trig.center.x - trig.size/2 ) {
+								triger_on = true;
+								cat_jump = true;
+								hero.interact_button();
+								break;
+							}
+						}
+						if (triger_on) break;
+					}
+					if (triger_on) {
+						printf("Trigged! Sound plz!\n");
+						lever_activate = 1;
+						lever_change = (lever_change + 1) % lever_state[stage];
+						// 설명
+						// if (stage == 스테이지 && i == 트리거번호) 동작 : for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
+						if (stage == 0 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
+						if (stage == 1 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
+						if (stage == 2 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
+						break;
+					}
+				}
 			}
 		}
 
@@ -324,12 +359,7 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		if (key == GLFW_KEY_RIGHT)
 			for (auto& s : characters[stage]) s.right_button(0);
 		if (key == GLFW_KEY_T)
-		{
-			next_stage = (stage + 1) % 3;//TOTAL_STAGE;
-			stage_change = 1;
-			stage_change_t = 1.5f;
-			printf("stage : %d\n", next_stage);
-		}
+			goto_next_stage();
 		if (key == GLFW_KEY_M)
 		{
 			if (lever_activate == 0 && eye_state[stage] != 0) {
@@ -525,9 +555,9 @@ void create_block_vertex_array()
 }
 void create_cat_vertex_array()
 {
-	catMesh[0] = load_model(mesh_obj, false, 0); // floor z
-	catMesh[1] = load_model(mesh_obj, false, 1); // floor x
-	catMesh[2] = load_model(mesh_obj, false, 2); // floor y
+	catMesh[0] = load_model(mesh_obj, false, 2, 0.01f); // floor z
+	catMesh[1] = load_model(mesh_obj, false, 0, 0.01f); // floor x
+	catMesh[2] = load_model(mesh_obj, false, 1, 0.01f); // floor y
 
 }
 void create_trigger_vertex_array()
@@ -535,6 +565,8 @@ void create_trigger_vertex_array()
 	std::vector<uint> indices;
 	std::vector<vertex> vertices;
 
+	//******************************************************************************************//
+	// 0 : zone shape trigger
 	//create vertices
 	vertices.push_back({ vec3(-0.5f,-0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
 	vertices.push_back({ vec3(0.5f,-0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
@@ -544,7 +576,6 @@ void create_trigger_vertex_array()
 	vertices.push_back({ vec3(0.3f,-0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
 	vertices.push_back({ vec3(0.3f,0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
 	vertices.push_back({ vec3(-0.3f,0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
-
 	//create indices
 	indices.push_back(0); indices.push_back(1); indices.push_back(4);
 	indices.push_back(4); indices.push_back(1); indices.push_back(5);
@@ -554,7 +585,6 @@ void create_trigger_vertex_array()
 	indices.push_back(6); indices.push_back(3); indices.push_back(7);
 	indices.push_back(3); indices.push_back(0); indices.push_back(7);
 	indices.push_back(7); indices.push_back(0); indices.push_back(4);
-
 	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
 	static GLuint index_buffer = 0;		// ID holder for index buffer
 	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
@@ -570,8 +600,8 @@ void create_trigger_vertex_array()
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
-	if (trigger_vertex_array_z) glDeleteVertexArrays(1, &trigger_vertex_array_z);
-	trigger_vertex_array_z = cg_create_vertex_array(vertex_buffer, index_buffer);
+	if (trigger_vertex_array[0][0]) glDeleteVertexArrays(1, &trigger_vertex_array[0][0]);
+	trigger_vertex_array[0][0] = cg_create_vertex_array(vertex_buffer, index_buffer);
 
 	for (auto& s : vertices) s.pos = vec3(s.pos.z, s.pos.x, s.pos.y);
 	vertex_buffer = 0;
@@ -582,8 +612,8 @@ void create_trigger_vertex_array()
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
-	if (trigger_vertex_array_x) glDeleteVertexArrays(1, &trigger_vertex_array_x);
-	trigger_vertex_array_x = cg_create_vertex_array(vertex_buffer, index_buffer);
+	if (trigger_vertex_array[0][1]) glDeleteVertexArrays(1, &trigger_vertex_array[0][1]);
+	trigger_vertex_array[0][1] = cg_create_vertex_array(vertex_buffer, index_buffer);
 
 	for (auto& s : vertices) s.pos = vec3(s.pos.z, s.pos.x, s.pos.y);
 	vertex_buffer = 0;
@@ -594,8 +624,14 @@ void create_trigger_vertex_array()
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
-	if (trigger_vertex_array_y) glDeleteVertexArrays(1, &trigger_vertex_array_y);
-	trigger_vertex_array_y = cg_create_vertex_array(vertex_buffer, index_buffer);
+	if (trigger_vertex_array[0][2]) glDeleteVertexArrays(1, &trigger_vertex_array[0][2]);
+	trigger_vertex_array[0][2] = cg_create_vertex_array(vertex_buffer, index_buffer);
+	//******************************************************************************************//
+	// 1 : portal shape trigger
+
+	//******************************************************************************************//
+	// 2 : finish shape trigger
+
 }
 
 
@@ -643,7 +679,7 @@ bool user_init()
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
 
-	stage = 2;
+	stage = 0;
 
 	return true;
 }

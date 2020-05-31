@@ -2,7 +2,7 @@
 #ifndef __character_H__
 #define __character_H__
 
-float character_size = 0.01f;
+float character_size = 0.2f;
 float jump_power = 0.01f;
 float gravity = 0.03f;
 
@@ -11,13 +11,12 @@ struct character_t
 	vec3	location			= vec3(0);		// position
 	vec3	ori_location		= vec3(0);		// position
 	float	facing_theta		= 0;			// facing direction
-	float	falling				= 0;
-	int		floor = 0;			// 0 = xy floor with z>0, 1 = yz floor with x>0, 2= xz floor with y>0
+	float	falling				= 0;			// falling variable
+	int		floor				= 0;			// 0 = xy floor with z>0, 1 = yz floor with x>0, 2= xz floor with y>0
 	bool	front_arrow_button	= false;		// front arrow button
 	bool	back_arrow_button	= false;		// back arrow button
 	bool	left_arrow_button	= false;		// left arrow button
 	bool	right_arrow_button	= false;		// right arrow button
-
 	mat4	model_matrix;						// modeling transformation
 
 	// public functions
@@ -26,6 +25,7 @@ struct character_t
 	void	left_button(bool status);
 	void	right_button(bool status);
 	void	spacebar_button();
+	void	interact_button();
 	void	update(float t, std::vector<std::vector<block_t>*>& obstcle);
 };
 
@@ -47,7 +47,7 @@ inline std::vector<character_t> create_characters0()
 	//x-axis test 
 	//characters.push_back(init_character(vec3(+2, -1, +0), 0, 1));
 	//y-axis test
-	characters.push_back(init_character(vec3(+1 * block_size, -2 * block_size, +3 * block_size), -PI/2, 0));
+	characters.push_back(init_character(vec3(+1 * block_size, -1 * block_size, +2 * block_size), -PI/2, 2));
 	//z-axis test
 	//characters.push_back(init_character(vec3(+1, +1, +0.5), 0, 0));
 
@@ -78,10 +78,14 @@ inline void character_t::front_button(bool status){ front_arrow_button = status;
 inline void character_t::back_button(bool status) { back_arrow_button = status; }
 inline void character_t::left_button(bool status) { left_arrow_button = status; }
 inline void character_t::right_button(bool status) { right_arrow_button = status; }
-inline void character_t::spacebar_button() { 
-	
+inline void character_t::spacebar_button() {
 	if (falling == 0) {
 		falling = -sqrt(jump_power / gravity);
+	}
+}
+inline void character_t::interact_button() {
+	if (falling == 0) {
+		falling = -sqrt(jump_power/10/gravity);
 	}
 }
 
@@ -134,23 +138,22 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 				//if block is on next x axis
 				if (abs(next_location.x - s.center.x) < character_size + s.size / 2 &&
 					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
-					next_location.z > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2) {
+					next_location.z + 0.001f > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2) {
 					next_location.x = location.x;
 				}
 				//if block is on next y axis
 				if (abs(next_location.y - s.center.y) < character_size + s.size / 2 &&
 					next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
-					next_location.z > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2) {
+					next_location.z + 0.001f > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2) {
 					next_location.y = location.y;
 				}
 				//if it's landed on the floor
 				if (next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
 					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
-					next_location.z - s.center.z <= s.size / 2 + character_size + 0.01 &&
-					s.center.z - next_location.z <= s.size / 2 + character_size + 0.01) {
+					abs(next_location.z - s.center.z) <= (s.size / 2) + 0.01) {
 					falling = min(0, falling);
 					onfloor = true;
-					next_location.z = s.size / 2 + character_size + s.center.z;
+					next_location.z = s.size / 2 + s.center.z;
 				}
 			}
 			// if floor is x axis
@@ -159,25 +162,23 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 				//if block is on next z axis
 				if (abs(next_location.z - s.center.z) < character_size + s.size / 2 &&
 					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
-					next_location.x > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2) {
+					next_location.x + 0.001f > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2) {
 					next_location.z = location.z;
 				}
 				//if block is on next y axis
 				if (abs(next_location.y - s.center.y) < character_size + s.size / 2 &&
 					next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
-					next_location.x > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2) {
+					next_location.x + 0.001f > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2) {
 					next_location.y = location.y;
 				}
 				//if it's landed on the floor
 				if (next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
 					next_location.y >= s.center.y - s.size / 2 && next_location.y <= s.center.y + s.size / 2 &&
-					next_location.x - s.center.x <= s.size / 2 + character_size + 0.01 &&
-					s.center.x - next_location.x <= s.size / 2 + character_size + 0.01) {
+					abs(next_location.x - s.center.x) <= (s.size / 2) + 0.01) {
 					falling = min(0, falling);
 					onfloor = true;
-					next_location.x = s.size / 2 + character_size + s.center.x;
+					next_location.x = s.size / 2 + s.center.x;
 				}
-
 			}
 			// if floor is y axis
 			else if (floor == 2) {
@@ -185,23 +186,22 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 				//if block is on next x axis
 				if (abs(next_location.x - s.center.x) < character_size + s.size / 2 &&
 					next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
-					next_location.y > s.center.y - s.size / 2 && next_location.y < s.center.y + s.size / 2) {
+					next_location.y + 0.001f > s.center.y - s.size / 2 && next_location.y < s.center.y + s.size / 2) {
 					next_location.x = location.x;
 				}
 				//if block is on next z axis
 				if (abs(next_location.z - s.center.z) < character_size + s.size / 2 &&
 					next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
-					next_location.y > s.center.y - s.size / 2 && next_location.y < s.center.y + s.size / 2) {
+					next_location.y + 0.001f > s.center.y - s.size / 2 && next_location.y < s.center.y + s.size / 2) {
 					next_location.z = location.z;
 				}
 				//if it's landed on the floor
-				if (next_location.x >= s.center.x - s.size / 2 && next_location.x <= s.center.x + s.size / 2 &&
-					next_location.z >= s.center.z - s.size / 2 && next_location.z <= s.center.z + s.size / 2 &&
-					next_location.y - s.center.y <= s.size / 2 + character_size + 0.01 &&
-					s.center.y - next_location.y <= s.size / 2 + character_size + 0.01) {
+				if (next_location.x > s.center.x - s.size / 2 && next_location.x < s.center.x + s.size / 2 &&
+					next_location.z > s.center.z - s.size / 2 && next_location.z < s.center.z + s.size / 2 &&
+					abs(next_location.y - s.center.y) <= (s.size / 2) + 0.01) {
 					falling = min(0, falling);
 					onfloor = true;
-					next_location.y = s.size / 2 + character_size + s.center.y;
+					next_location.y = s.size / 2 + s.center.y;
 				}
 			}
 		}
@@ -221,18 +221,13 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 			next_location.y = location.y - (falling >= 0 ? 1 : -1) * falling * falling * gravity;
 		}
 	}
-	else {
-		falling = 0;
-	}
+	else falling = 0;
+
 	if (next_location.x < -10.0f || next_location.y < -10.0f || next_location.z < -10.0f) next_location = ori_location;
 	location = next_location;
 
-
-
-	
 	model_matrix = mat4::translate(location)	// rotation around sun
-		* mat4::rotate(axis, facing_theta+ PI / 2)	// self rotation
-		* mat4::scale(character_size, character_size, character_size);	// size
+		* mat4::rotate(axis, facing_theta + PI / 2);	// self rotation
 }
 
 #endif

@@ -23,8 +23,8 @@ uniform bool use_texture;
 
 vec4 phong(vec3 l, vec3 n, vec3 h)
 {
-	vec4 Ira = Ka * Ia;									// ambient reflection
-	vec4 Ird = max(dot(l, n) * Id, 0.0);					// diffuse reflection
+	vec4 Ira = Ka * Ia;											// ambient reflection
+	vec4 Ird = max(dot(l, n) * Id, 0.0);						// diffuse reflection
 	vec4 Irs = max(Ks * pow(dot(h, n), shininess) * Is, 0.0);	// specular reflection
 
 	float dln = dot(l, n);

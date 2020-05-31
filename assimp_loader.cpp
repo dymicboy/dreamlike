@@ -99,7 +99,7 @@ Texture* load_texture(const aiMaterial* ai_material, const fs::path& model_direc
     return nullptr;
 }
 
-mesh2* load_model(const std::string& path, bool bFlipUV, int floor)
+mesh2* load_model(const std::string& path, bool bFlipUV, int floor, float size)
 {
     // *** preprocess ************************************************************
     fs::path model_path(path);
@@ -213,22 +213,15 @@ mesh2* load_model(const std::string& path, bool bFlipUV, int floor)
         // append a geometry.
         new_mesh->geometry_list.push_back(std::move(geometry(mat, index_start, index_list.size() - index_start)));
     }
-    float tmp;
-    if (floor == 1 || floor == 2) {
-        for (auto& s : new_mesh->vertex_list) {
-            tmp = s.pos.x;
-            s.pos.x = s.pos.y;
-            s.pos.y = s.pos.z;
-            s.pos.z = tmp;
-        }
-        if (floor == 1) {
-            for (auto& s : new_mesh->vertex_list) {
-                tmp = s.pos.x;
-                s.pos.x = s.pos.y;
-                s.pos.y = s.pos.z;
-                s.pos.z = tmp;
-            }
-        }
+    
+
+    for (auto& s : new_mesh->vertex_list) s.pos = s.pos*size;
+
+    if (floor == 0) {
+        for (auto& s : new_mesh->vertex_list) s.pos = vec3(s.pos.z, s.pos.x, s.pos.y);
+    }
+    if (floor == 1) {
+        for (auto& s : new_mesh->vertex_list) s.pos = vec3(s.pos.y, s.pos.z, s.pos.x);
     }
 
     // *** buffer creation *******************************************************
