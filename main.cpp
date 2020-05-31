@@ -80,7 +80,7 @@ struct camera
 
 struct light_t
 {
-	vec4	position = vec4(+10.0f, +25.0f, +10.0f, 0.0f);   // directional light
+	vec4	position = vec4(+0.0f, +100.0f, +0.0f, 0.0f);   // directional light
 	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -333,6 +333,7 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 						if (stage == 0 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
 						if (stage == 1 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
 						if (stage == 2 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
+						if (stage == 3 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
 						break;
 					}
 				}
@@ -679,7 +680,16 @@ bool user_init()
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
 
-	stage = 0;
+	// Stage 3.
+	stage = 3;
+	blocks[stage] = std::move(create_blocks3());
+	rotate_blocks[stage][0] = std::move(create_rotate_blocks3());
+	triggers[stage][0] = std::move(create_triggers3());
+	characters[stage] = std::move(create_characters3());
+	obstacles[stage].push_back(&blocks[stage]);
+	obstacles[stage].push_back(&rotate_blocks[stage][0]);
+
+	stage = 3;
 
 	return true;
 }

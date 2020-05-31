@@ -21,10 +21,10 @@ uniform vec4	Ka, Kd, Ks;					// material properties
 uniform sampler2D TEX;
 uniform bool use_texture;
 
-vec4 phong(vec3 l, vec3 n, vec3 h)
+vec4 phong(vec3 l, vec3 n, vec3 h, vec4 Kd)
 {
 	vec4 Ira = Ka * Ia;											// ambient reflection
-	vec4 Ird = max(dot(l, n) * Id, 0.0);						// diffuse reflection
+	vec4 Ird = max(Kd * dot(l, n) * Id, 0.0);						// diffuse reflection
 	vec4 Irs = max(Ks * pow(dot(h, n), shininess) * Is, 0.0);	// specular reflection
 
 	float dln = dot(l, n);
@@ -48,11 +48,11 @@ void main()
 	vec3 v = normalize(-p);		// eye-epos = vec3(0)-epos
 	vec3 h = normalize(l + v);	// the halfway vector
 
-	//vec4 iKd = texture(TEX, tc);	// Kd from image
+	vec4 iKd = texture(TEX, tc);	// Kd from image
 	//if (mode == 0)			fragColor = phong(l, n, h, iKd);
 	//else if (mode == 1)	fragColor = phong(l, n, h, Kd);
 	//else if (mode == 2)	fragColor = iKd;
 	//else				fragColor = vec4(tc, 0, 1);
-	vec4 temp = phong(l, n, h);
+	vec4 temp = phong(l, n, h, iKd);
 	fragColor = use_texture ? texture( TEX, tc ) : vec4(temp.x * norm.x, temp.y * norm.y, temp.z * norm.z, 1);
 }
