@@ -16,10 +16,13 @@ static const char*	vert_shader_path = "../dreamlike.vert";
 static const char*	frag_shader_path = "../dreamlike.frag";
 static const char*  back_tex_path = "./bin/back/back_1024.jpg";
 static const char*	back_music_path = "./bin/sounds/back_music.mp3";
+static const char*	cat_music_path = "./bin/sounds/cat_sound.mp3";
+static const char*	cat_fall_path = "./bin/sounds/cat_fall.mp3";
 
 irrklang::ISoundEngine* engine;
 irrklang::ISoundSource* back_mp3_src = nullptr;
 irrklang::ISoundSource* cat_mp3_src = nullptr;
+irrklang::ISoundSource* cat_fall_src = nullptr;
 
 mesh2* catMesh[5];
 mesh2* roseMesh[5];
@@ -273,6 +276,7 @@ void render()
 	for (auto& s : characters[stage])
 	{
 		mesh2* pMesh = catMesh[0];
+
 		if (s.floor == 0) pMesh = catMesh[0];
 		if (s.floor == 1) pMesh = catMesh[1];
 		if (s.floor == 2) pMesh = catMesh[2];
@@ -284,11 +288,13 @@ void render()
 		glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, nullptr);
 		
+		vec3 tmp = s.location;
 		if (lever_activate && cat_jump && s.falling != 0) s.update(t, obstacles[stage]);
 		else cat_jump = 0;
 
 		if (!lever_activate)
 			s.update(t, obstacles[stage]);
+		if (s.location.x - tmp.x > 7 || s.location.y - tmp.y > 7 || s.location.z - tmp.z > 7) engine->play2D(cat_fall_src);
 	}
 	
 	// swap front and back buffers, and display to screen
@@ -329,10 +335,13 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			for (auto& s : characters[stage]) s.left_button(1);
 		if (key == GLFW_KEY_RIGHT)
 			for (auto& s : characters[stage]) s.right_button(1);
-		if (key == GLFW_KEY_SPACE)
+		if (key == GLFW_KEY_SPACE) {
+			engine->play2D(cat_mp3_src);
 			for (auto& s : characters[stage]) s.spacebar_button();
+		}
 
 		if (key == GLFW_KEY_R) {
+			engine->play2D(cat_mp3_src);
 			if (lever_activate == 0) {
 				bool triger_on = false;
 				for (int i = 0; i < 5; i++) {
@@ -833,9 +842,13 @@ bool user_init()
 
 	//add sound source from the sound file
 	back_mp3_src = engine->addSoundSourceFromFile(back_music_path);
+	cat_mp3_src = engine->addSoundSourceFromFile(cat_music_path);
+	cat_fall_src = engine->addSoundSourceFromFile(cat_fall_path);
 
 	//set default volume
-	back_mp3_src->setDefaultVolume(0.5f);
+	back_mp3_src->setDefaultVolume(0.7f);
+	cat_mp3_src->setDefaultVolume(0.5f);
+	cat_fall_src->setDefaultVolume(0.5f);
 
 	//play the sound file
 	engine->play2D(back_mp3_src, true);

@@ -90,7 +90,7 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 {
 	int moving = 0;
 	int rotating = 0;
-	if (front_arrow_button) moving += 1;
+	if (front_arrow_button) moving += 2;
 	if (right_arrow_button) rotating -= 1;
 	if (left_arrow_button) rotating += 1;
 
