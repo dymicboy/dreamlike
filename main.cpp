@@ -12,10 +12,10 @@
 static const char*	window_name = "team dreamlike";
 static const char*	vert_shader_path = "../dreamlike.vert";
 static const char*	frag_shader_path = "../dreamlike.frag";
-static const char*	mesh_obj = "./bin/Cat/12221_Cat_v1_l3.obj";
 static const char*  back_tex_path = "./bin/back/back_1024.jpg";
 
 mesh2* catMesh[5];
+mesh2* roseMesh[5];
 
 GLuint	block_vertex_array = 0;
 GLuint	back_vertex_array = 0;	
@@ -23,7 +23,7 @@ GLuint	trigger_vertex_array[5][5] = { 0 };	// [shape][floor]
 
 std::vector<block_t> blocks[TOTAL_STAGE];				// 5개 스테이지, 기본 블럭
 std::vector<block_t> rotate_blocks[TOTAL_STAGE][4];		// 5개 스테이지, 최대 4개의 rotating group
-std::vector<trigger_t> triggers[TOTAL_STAGE][4];			// 5개 스테이지, triggers group
+std::vector<trigger_t> triggers[TOTAL_STAGE][5];			// 5개 스테이지, triggers group
 
 //multiple character use available
 std::vector<character_t>	characters[5];
@@ -267,9 +267,29 @@ void render()
 		for (auto& s : triggers[stage][i])
 		{
 			s.update(t);
-			glBindVertexArray(trigger_vertex_array[s.shape][s.floor]);
 			glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
-			glDrawElements(GL_TRIANGLES, 8 * 3, GL_UNSIGNED_INT, nullptr);
+			if (s.shape == 5) {
+				glBindVertexArray(roseMesh[s.floor]->vertex_array);
+				for (size_t k = 0, kn = roseMesh[s.floor]->geometry_list.size(); k < kn; k++) {
+					geometry& g = roseMesh[s.floor]->geometry_list[k];
+					if (g.mat->textures.diffuse) {
+						glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+						glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+						glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+					}
+					else {
+						glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+						glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+					}
+					// render vertices: trigger shader programs to process vertex data
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, roseMesh[s.floor]->index_buffer);
+					glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+				}
+			}
+			else {
+				glBindVertexArray(trigger_vertex_array[s.shape][s.floor]);
+				glDrawElements(GL_TRIANGLES, 8 * 3, GL_UNSIGNED_INT, nullptr);
+			}
 		}
 	}
 
@@ -589,13 +609,19 @@ void create_block_vertex_array()
 	if (block_vertex_array) glDeleteVertexArrays(1, &block_vertex_array);
 	block_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
 }
-void create_cat_vertex_array()
+void create_cat_mesh()
 {
-	catMesh[0] = load_model(mesh_obj, false, 2, 0.01f); // floor z
-	catMesh[1] = load_model(mesh_obj, false, 0, 0.01f); // floor x
-	catMesh[2] = load_model(mesh_obj, false, 1, 0.01f); // floor y
-
+	catMesh[0] = load_model("./bin/Cat/12221_Cat_v1_l3.obj", false, 2, 0.01f); // floor z
+	catMesh[1] = load_model("./bin/Cat/12221_Cat_v1_l3.obj", false, 0, 0.01f); // floor x
+	catMesh[2] = load_model("./bin/Cat/12221_Cat_v1_l3.obj", false, 1, 0.01f); // floor y
 }
+void create_rose_mesh()
+{
+	roseMesh[0] = load_model("./bin/rose/rose.obj", false, 0, 0.01f); // floor z
+	roseMesh[1] = load_model("./bin/rose/rose.obj", false, 1, 0.01f); // floor x
+	roseMesh[2] = load_model("./bin/rose/rose.obj", false, 2, 0.01f); // floor y
+}
+
 void create_back_vertex_array()
 {
 	std::vector<uint> indices;
@@ -632,8 +658,6 @@ void create_back_vertex_array()
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
 	if (back_vertex_array) glDeleteVertexArrays(1, &back_vertex_array);
 	back_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
-
-
 }
 void create_trigger_vertex_array()
 {
@@ -701,11 +725,6 @@ void create_trigger_vertex_array()
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
 	if (trigger_vertex_array[0][2]) glDeleteVertexArrays(1, &trigger_vertex_array[0][2]);
 	trigger_vertex_array[0][2] = cg_create_vertex_array(vertex_buffer, index_buffer);
-	//******************************************************************************************//
-	// 1 : portal shape trigger
-
-	//******************************************************************************************//
-	// 2 : finish shape trigger
 
 }
 
@@ -724,9 +743,11 @@ bool user_init()
 
 	// load the mesh
 	create_block_vertex_array();
-	create_cat_vertex_array();
 	create_trigger_vertex_array();
 	create_back_vertex_array();
+
+	create_cat_mesh();
+	create_rose_mesh();
 
 	// Stage 0.
 	stage = 0;

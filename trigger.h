@@ -42,6 +42,7 @@ inline std::vector<trigger_t> create_triggers0()
 	//y-axis test 
 	//triggers.push_back(init_trigger(vec3(-6 * block_size, -2 * block_size, -1 * block_size), 4, 2));
 	triggers.push_back(init_trigger(vec3(-3 * block_size, -2 * block_size, +1 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(-3 * block_size, -2 * block_size, +1 * block_size), 4, 2, 5));
 	return triggers;
 }
 
