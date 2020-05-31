@@ -32,7 +32,7 @@ inline trigger_t init_trigger(vec3 _center, int _status_num = 0, int _floor = 0,
 	return temp;
 }
 
-inline std::vector<trigger_t> create_triggers0()
+inline std::vector<trigger_t> create_triggers0_0()
 {
 	std::vector<trigger_t> triggers;
 	//z-axis test 
@@ -41,38 +41,128 @@ inline std::vector<trigger_t> create_triggers0()
 	//triggers.push_back(init_trigger(vec3(+2 * block_size, +3 * block_size, +0 * block_size), 4, 1));
 	//y-axis test 
 	//triggers.push_back(init_trigger(vec3(-6 * block_size, -2 * block_size, -1 * block_size), 4, 2));
-	triggers.push_back(init_trigger(vec3(-3 * block_size, -2 * block_size, +1 * block_size), 4, 2));
-	triggers.push_back(init_trigger(vec3(-3 * block_size, -2 * block_size, +1 * block_size), 4, 2, 5));
+	triggers.push_back(init_trigger(vec3(-2 * block_size, -2 * block_size, +0 * block_size), 4, 2));
 	return triggers;
 }
 
-inline std::vector<trigger_t> create_triggers1()
+inline std::vector<trigger_t> create_triggers0_1()
 {
 	std::vector<trigger_t> triggers;
-	triggers.push_back(init_trigger(vec3(-3 * block_size, -2 * block_size, -8 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(-5 * block_size, -2 * block_size, -2 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(-5 * block_size, -2 * block_size, -2 * block_size), 4, 2, 5));
 	return triggers;
 }
 
-inline std::vector<trigger_t> create_triggers2()
+inline std::vector<trigger_t> create_triggers1_0()
+{
+	std::vector<trigger_t> triggers;
+	triggers.push_back(init_trigger(vec3(-2 * block_size, -2 * block_size, +3 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(+3 * block_size, -2 * block_size, -2 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers1_1()
+{
+	std::vector<trigger_t> triggers;
+	triggers.push_back(init_trigger(vec3(-4 * block_size, -2 * block_size, -7 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(-4 * block_size, -2 * block_size, -7 * block_size), 4, 2, 5));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_0()
 {
 	std::vector<trigger_t> triggers;
 	// First Pillar.
-	triggers.push_back(init_trigger(vec3(+2 * block_size, -2 * block_size, +1 * block_size), 4, 2));
-	triggers.push_back(init_trigger(vec3(+2 * block_size, -2 * block_size, -2 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(+2 * block_size, -3 * block_size, +1 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_1()
+{
+	std::vector<trigger_t> triggers;
+	// First Pillar.
+	triggers.push_back(init_trigger(vec3(+2 * block_size, -3 * block_size, -2 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_2()
+{
+	std::vector<trigger_t> triggers;
 	// Second Pillar.
-	triggers.push_back(init_trigger(vec3(+1 * block_size, -2 * block_size, -3 * block_size), 4, 2));
-	triggers.push_back(init_trigger(vec3(-2 * block_size, -2 * block_size, -3 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(+1 * block_size, -3 * block_size, -3 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_3()
+{
+	std::vector<trigger_t> triggers;
+	// Second Pillar.
+	triggers.push_back(init_trigger(vec3(-2 * block_size, -3 * block_size, -3 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_4()
+{
+	std::vector<trigger_t> triggers;
 	// Third Pillar.
-	triggers.push_back(init_trigger(vec3(-3 * block_size, -2 * block_size, -2 * block_size), 4, 2));
-	triggers.push_back(init_trigger(vec3(-3 * block_size, -2 * block_size, +1 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(-3 * block_size, -3 * block_size, -2 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_5()
+{
+	std::vector<trigger_t> triggers;
+	// Third Pillar.
+	triggers.push_back(init_trigger(vec3(-3 * block_size, -3 * block_size, +1 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_6()
+{
+	std::vector<trigger_t> triggers;
 	// Fourth Pillar.
-	triggers.push_back(init_trigger(vec3(-2 * block_size, -2 * block_size, +2 * block_size), 4, 2));
-	triggers.push_back(init_trigger(vec3(+1 * block_size, -2 * block_size, +2 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(-2 * block_size, -3 * block_size, +2 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_7()
+{
+	std::vector<trigger_t> triggers;
+	// Fourth Pillar.
+	triggers.push_back(init_trigger(vec3(+1 * block_size, -3 * block_size, +2 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_8()
+{
+	std::vector<trigger_t> triggers;
 	// Top.
-	triggers.push_back(init_trigger(vec3(+2 * block_size, +3 * block_size, +2 * block_size), 4, 2));
-	triggers.push_back(init_trigger(vec3(-3 * block_size, +3 * block_size, +2 * block_size), 4, 2));
-	triggers.push_back(init_trigger(vec3(-3 * block_size, +3 * block_size, -3 * block_size), 4, 2));
-	triggers.push_back(init_trigger(vec3(+2 * block_size, +3 * block_size, -3 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(+2 * block_size, +2 * block_size, +2 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_9()
+{
+	std::vector<trigger_t> triggers;
+	// Top.
+	triggers.push_back(init_trigger(vec3(-3 * block_size, +2 * block_size, +2 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_10()
+{
+	std::vector<trigger_t> triggers;
+	// Top.
+	triggers.push_back(init_trigger(vec3(-3 * block_size, +2 * block_size, -3 * block_size), 4, 2));
+	return triggers;
+}
+
+inline std::vector<trigger_t> create_triggers2_11()
+{
+	std::vector<trigger_t> triggers;
+	// Top.
+	triggers.push_back(init_trigger(vec3(+2 * block_size, +2 * block_size, -3 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(+2 * block_size, +2 * block_size, -3 * block_size), 4, 2, 5));
 	return triggers;
 }
 

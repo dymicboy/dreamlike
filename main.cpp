@@ -23,7 +23,7 @@ GLuint	trigger_vertex_array[5][5] = { 0 };	// [shape][floor]
 
 std::vector<block_t> blocks[TOTAL_STAGE];				// 5개 스테이지, 기본 블럭
 std::vector<block_t> rotate_blocks[TOTAL_STAGE][4];		// 5개 스테이지, 최대 4개의 rotating group
-std::vector<trigger_t> triggers[TOTAL_STAGE][5];			// 5개 스테이지, triggers group
+std::vector<trigger_t> triggers[TOTAL_STAGE][12];			// 5개 스테이지, triggers group
 
 //multiple character use available
 std::vector<character_t>	characters[5];
@@ -91,22 +91,6 @@ struct back_t
 		* mat4::scale(500);;
 };
 
-struct light_t
-{
-	vec4	position = vec4(+0.0f, -100.0f, +0.0f, 0.0f);   // directional light
-	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
-	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
-	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-};
-
-struct material_t
-{
-	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
-	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
-	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	float	shininess = 100.0f;
-};
-
 //*************************************
 // window objects
 GLFWwindow*	window = nullptr;
@@ -125,9 +109,6 @@ int		frame = 0;				// index of rendering frames
 mesh*		pMesh = nullptr;
 camera		cam;
 back_t		back;
-light_t		light_top;
-light_t		light_left;
-material_t	material;
 
 // utility function
 vec2 cursor_to_ndc(dvec2 cursor, ivec2 window_size)
@@ -213,23 +194,6 @@ void update()
 	GLint uloc;
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
-
-	// setup light properties
-	glUniform4fv(glGetUniformLocation(program, "light_top_position"), 1, light_top.position);
-	glUniform4fv(glGetUniformLocation(program, "top_Ia"), 1, light_top.ambient);
-	glUniform4fv(glGetUniformLocation(program, "top_Id"), 1, light_top.diffuse);
-	glUniform4fv(glGetUniformLocation(program, "top_Is"), 1, light_top.specular);
-
-	glUniform4fv(glGetUniformLocation(program, "light_left_position"), 1, light_left.position);
-	glUniform4fv(glGetUniformLocation(program, "left_Ia"), 1, light_left.ambient);
-	glUniform4fv(glGetUniformLocation(program, "left_Id"), 1, light_left.diffuse);
-	glUniform4fv(glGetUniformLocation(program, "left_Is"), 1, light_left.specular);
-
-	// setup material properties
-	glUniform4fv(glGetUniformLocation(program, "Ka"), 1, material.ambient);
-	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
-	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
-	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
 }
 
 void render()
@@ -387,10 +351,49 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 						lever_change = (lever_change + 1) % lever_state[stage];
 						// 설명
 						// if (stage == 스테이지 && i == 트리거번호) 동작 : for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
-						if (stage == 0 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
-						if (stage == 1 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
-						if (stage == 2 && i == 0) for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
-						if (stage == 3)
+						if (stage == 0)
+						{
+							if (i == 0)			for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
+							else if (i == 1)	goto_next_stage();
+						}
+						else if (stage == 1)
+						{
+							if (i == 0)			for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
+							else if (i == 1)	goto_next_stage();
+						}
+						else if (stage == 2)
+						{
+							if (i == 0)
+							{
+								for (auto& s : characters[stage]) s.location = vec3(+1 * block_size, -3 * block_size, -3 * block_size);
+							}
+							else if (i == 1)	for (auto& s : rotate_blocks[stage][1]) s.block_rotation(PI / 2);
+							else if (i == 2)	for (auto& s : rotate_blocks[stage][2]) s.block_rotation(PI / 2);
+							else if (i == 3)	for (auto& s : rotate_blocks[stage][3]) s.block_rotation(PI / 2);
+							else if (i == 4)	for (auto& s : rotate_blocks[stage][4]) s.block_rotation(PI / 2);
+							else if (i == 5)	for (auto& s : rotate_blocks[stage][5]) s.block_rotation(PI / 2);
+							else if (i == 6)
+							{
+								for (auto& s : characters[stage])
+								{
+									s.location = vec3(+1 * block_size, -3 * block_size, -3 * block_size);
+									s.update(t, obstacles[stage]);
+								}
+							}
+							else if (i == 7)
+							{
+								for (auto& s : characters[stage])
+								{
+									s.location = vec3(+1 * block_size, -3 * block_size, -3 * block_size);
+									s.update(t, obstacles[stage]);
+								}
+							}
+							else if (i == 8)	for (auto& s : rotate_blocks[stage][8]) s.block_rotation(PI / 2);
+							else if (i == 9)	for (auto& s : rotate_blocks[stage][9]) s.block_rotation(PI / 2);
+							else if (i == 10)	for (auto& s : rotate_blocks[stage][10]) s.block_rotation(PI / 2);
+							else if (i == 11)	for (auto& s : rotate_blocks[stage][11]) s.block_rotation(PI / 2);
+						}
+						else if (stage == 3)
 						{
 							if (i == 0) for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
 							else if (i == 1) for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
@@ -757,20 +760,22 @@ bool user_init()
 
 	// Stage 0.
 	stage = 0;
-	blocks[stage]				= std::move(create_blocks0());
-	rotate_blocks[stage][0]		= std::move(create_rotate_blocks0());
-	triggers[stage][0]			= std::move(create_triggers0());
-	characters[stage]			= std::move(create_characters0());
+	blocks[stage]			= std::move(create_blocks0());
+	rotate_blocks[stage][0]	= std::move(create_rotate_blocks0());
+	triggers[stage][0]		= std::move(create_triggers0_0());
+	triggers[stage][1]		= std::move(create_triggers0_1());
+	characters[stage]		= std::move(create_characters0());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
 	stage_camera_zoom[0] = 1.0f;
 
 	// Stage 1.
 	stage = 1;
-	blocks[stage]				= std::move(create_blocks1());
-	rotate_blocks[stage][0]		= std::move(create_rotate_blocks1());
-	triggers[stage][0]			= std::move(create_triggers1());
-	characters[stage]			= std::move(create_characters1());
+	blocks[stage]			= std::move(create_blocks1());
+	rotate_blocks[stage][0]	= std::move(create_rotate_blocks1());
+	triggers[stage][0]		= std::move(create_triggers1_0());
+	triggers[stage][1]		= std::move(create_triggers1_1());
+	characters[stage]		= std::move(create_characters1());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
 	stage_camera_zoom[1] = 1.0f;
@@ -779,7 +784,18 @@ bool user_init()
 	stage = 2;
 	blocks[stage] = std::move(create_blocks2());
 	rotate_blocks[stage][0] = std::move(create_rotate_blocks2());
-	triggers[stage][0] = std::move(create_triggers2());
+	triggers[stage][0] = std::move(create_triggers2_0());
+	triggers[stage][1] = std::move(create_triggers2_1());
+	triggers[stage][2] = std::move(create_triggers2_2());
+	triggers[stage][3] = std::move(create_triggers2_3());
+	triggers[stage][4] = std::move(create_triggers2_4());
+	triggers[stage][5] = std::move(create_triggers2_5());
+	triggers[stage][6] = std::move(create_triggers2_6());
+	triggers[stage][7] = std::move(create_triggers2_7());
+	triggers[stage][8] = std::move(create_triggers2_8());
+	triggers[stage][9] = std::move(create_triggers2_9());
+	triggers[stage][10] = std::move(create_triggers2_10());
+	triggers[stage][11] = std::move(create_triggers2_11());
 	characters[stage] = std::move(create_characters2());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
@@ -804,9 +820,7 @@ bool user_init()
 	obstacles[stage].push_back(&rotate_blocks[stage][3]);
 	stage_camera_zoom[3] = 1.5f;
 
-	stage = 3;
-
-	light_left.position = vec4(-100.0f, 0.0f, 0.0f, 1.0f);
+	stage = 2;
 
 	return true;
 }

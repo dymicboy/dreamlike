@@ -18,8 +18,6 @@ void main()
 	epos = view_matrix * wpos;
 	gl_Position = projection_matrix * epos;
 
-	// pass eye-coordinate normal to fragment shader
-	//norm = normalize(mat3(view_matrix*model_matrix)*normal);
 	norm = normal;
 	tc = texcoord;
 }
