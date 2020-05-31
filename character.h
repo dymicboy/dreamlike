@@ -56,20 +56,21 @@ inline std::vector<character_t> create_characters0()
 inline std::vector<character_t> create_characters1()
 {
 	std::vector<character_t> characters;
-
-	//y-axis test
 	characters.push_back(init_character(vec3(+1 * block_size, -1 * block_size, +2 * block_size), 0, 2));
-
 	return characters;
 }
 
 inline std::vector<character_t> create_characters2()
 {
 	std::vector<character_t> characters;
+	characters.push_back(init_character(vec3(+2 * block_size, -1 * block_size, +1 * block_size), 0, 2));
+	return characters;
+}
 
-	//y-axis test
-	characters.push_back(init_character(vec3(-5 * block_size, -2 * block_size, -1 * block_size), 0, 2));
-
+inline std::vector<character_t> create_characters3()
+{
+	std::vector<character_t> characters;
+	characters.push_back(init_character(vec3(+2 * block_size, +3 * block_size, +2 * block_size), 0, 2));
 	return characters;
 }
 

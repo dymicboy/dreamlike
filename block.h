@@ -8,6 +8,8 @@ int		eye_change = 0;
 int		eye_state[TOTAL_STAGE] = { 0, 0, 4, 4, 0 };
 int		lever_change = 0;
 int		lever_state[TOTAL_STAGE] = { 4, 8, 0, 4, 0 };
+int		rotate_blocks_cnt[TOTAL_STAGE] = { 1, 1, 1, 4, 0 };
+int		triggers_cnt[TOTAL_STAGE] = { 1, 1, 1, 4, 0 };
 float	block_size = 0.5f;
 
 enum Block_Type : int
@@ -24,7 +26,7 @@ struct block_t
 	vec3	center		= vec3(0);		// 3D position for translation
 	float	size		= block_size;	// size
 	mat4	model_matrix;					// modeling transformation
-	Block_Type	type	= Stop_Block;
+	Block_Type	type	= Stop_Block;s
 	// Change Block's Common Variables. (Change Block = Rotate_Block | Move_Block | Elevate_Block)
 	int		sw			= 0;
 	vec3	destination = vec3(0);
@@ -225,7 +227,35 @@ inline std::vector<block_t> create_blocks2()
 	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, -3 * block_size)));
 	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -3 * block_size)));
 	// Third Pillar.
+	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, +1 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, +0 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, -1 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, -2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +1 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +0 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -1 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -3 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -1 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +0 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +1 * block_size)));
 	// Fourth Pillar.
+	blocks.push_back(init_block(vec3(+1 * block_size, +3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+0 * block_size, +3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, +3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, +3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +3 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +1 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, +0 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -1 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(-1 * block_size, -2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+0 * block_size, -2 * block_size, +2 * block_size)));
+	blocks.push_back(init_block(vec3(+1 * block_size, -2 * block_size, +2 * block_size)));
 	// Main Road to the Goal.
 	return blocks;
 }
@@ -236,10 +266,98 @@ inline std::vector<block_t> create_rotate_blocks2()
 	return blocks;
 }
 
+inline std::vector<block_t> create_blocks3()
+{
+	std::vector<block_t> blocks;
+	// Four Sides.
+	for (int i = 0; i < 5; i++)
+	{
+		for (int j = 0; j < 5; j++)
+		{
+			blocks.push_back(init_block(vec3(+2 * block_size, (+2 - i) * block_size, (+2 - j) * block_size)));
+			blocks.push_back(init_block(vec3((+2 - j) * block_size, (+2 - i) * block_size, -3 * block_size)));
+			blocks.push_back(init_block(vec3(-3 * block_size, (+2 - i) * block_size, (-3 + j) * block_size)));
+			blocks.push_back(init_block(vec3((-3 + j) * block_size, (+2 - i) * block_size, +2 * block_size)));
+		}
+	}
+	// Main Road to the Goal.
+	return blocks;
+}
+
+inline std::vector<block_t> create_rotate_blocks3_0()
+{
+	std::vector<block_t> blocks;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 6; j++)
+		{
+			blocks.push_back(init_block(
+				vec3((-3 + i) * block_size, +3 * block_size, (-3 + j) * block_size), Rotate_Block, 0,
+				vec3((-3 + i) * block_size, (+3 + j)* block_size, -3 * block_size),
+				vec3((-3 + i) * block_size, +3 * block_size, -3 * block_size),
+				vec3(1, 0, 0), - PI / 2));
+		}
+	}
+	return blocks;
+}
+
+inline std::vector<block_t> create_rotate_blocks3_1()
+{
+	std::vector<block_t> blocks;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 6; j++)
+		{
+			blocks.push_back(init_block(
+				vec3((-3 + j) * block_size, +3 * block_size, (+2 - i) * block_size), Rotate_Block, 1,
+				vec3(-3 * block_size, (+3 + j) * block_size, (+2 - i) * block_size),
+				vec3(-3 * block_size, +3 * block_size, (+2 - i) * block_size),
+				vec3(0, 0, 1), 0));
+		}
+	}
+	return blocks;
+}
+
+inline std::vector<block_t> create_rotate_blocks3_2()
+{
+	std::vector<block_t> blocks;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 6; j++)
+		{
+			blocks.push_back(init_block(
+				vec3((-3 + i) * block_size, +3 * block_size, (+2 - j) * block_size), Rotate_Block, 2,
+				vec3((-3 + i) * block_size, (+3 + j) * block_size, +2 * block_size),
+				vec3((-3 + i) * block_size, +3 * block_size, +2 * block_size),
+				vec3(1, 0, 0), - PI / 2));
+		}
+	}
+	return blocks;
+}
+
+inline std::vector<block_t> create_rotate_blocks3_3()
+{
+	std::vector<block_t> blocks;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 6; j++)
+		{
+			blocks.push_back(init_block(
+				vec3((+2 - j) * block_size, +3 * block_size, (+2 - i) * block_size), Rotate_Block, 3,
+				vec3(+2 * block_size, (+3 + j) * block_size, (+2 - i) * block_size),
+				vec3(+2 * block_size, +3 * block_size, (+2 - i) * block_size),
+				vec3(0, 0, 1), - PI));
+		}
+	}
+	return blocks;
+}
+
 inline void block_t::block_rotation(float rotate_angle=0)
 {
 	if (type == Rotate_Block)
+	{
 		target_theta = current_theta + rotate_angle;
+	}
 	rotate_flag = true;
 }
 
@@ -256,23 +374,28 @@ inline void block_t::update(float t)
 		//if it's rotating
 		if (abs(target_theta - current_theta) > 0) {
 			if (target_theta > current_theta) {
-				if (target_theta < current_theta + 10*t) t = (target_theta - current_theta)/10;
+				if (target_theta < current_theta + 10*t) t = (target_theta - current_theta) / 10;
 			}
 			else {
 				t = -t;
-				if (target_theta > current_theta + 10*t) t = (target_theta - current_theta)/10;
+				if (target_theta > current_theta + 10*t) t = (target_theta - current_theta) / 10;
 			}
 			current_theta = current_theta + 10*t;
-			facing_theta = facing_theta + 10*t;
-			if (axis.x > 0.0f)		center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta));// +(diff * sin(facing_theta));
-			else if (axis.y > 0.0f)	center = rotate_center + vec3(dis * sin(current_theta), 0, dis * cos(current_theta));// +(diff * sin(facing_theta));
-			else if (axis.z > 0.0f)	center = rotate_center + vec3(dis * cos(current_theta), dis * sin(current_theta), 0);// +(diff * sin(facing_theta));
+			center = rotate_center;
 			if (stage == 0)
 			{
+				facing_theta = facing_theta + 10 * t;
+				if (axis.x > 0.0f)		center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta));// +(diff * sin(facing_theta));
+				else if (axis.y > 0.0f)	center = rotate_center + vec3(dis * sin(current_theta), 0, dis * cos(current_theta));// +(diff * sin(facing_theta));
+				else if (axis.z > 0.0f)	center = rotate_center + vec3(dis * cos(current_theta), dis * sin(current_theta), 0);// +(diff * sin(facing_theta));
 				if (sw == lever_change || (sw + 1) % lever_state[stage] == lever_change) center += diff * sin(current_theta);
 			}
 			else if (stage == 1)
 			{
+				facing_theta = facing_theta + 10 * t;
+				if (axis.x > 0.0f)		center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta));// +(diff * sin(facing_theta));
+				else if (axis.y > 0.0f)	center = rotate_center + vec3(dis * sin(current_theta), 0, dis * cos(current_theta));// +(diff * sin(facing_theta));
+				else if (axis.z > 0.0f)	center = rotate_center + vec3(dis * cos(current_theta), dis * sin(current_theta), 0);// +(diff * sin(facing_theta));
 				/*
 				if (sw == lever_change)
 				{
@@ -288,8 +411,31 @@ inline void block_t::update(float t)
 				}
 				*/
 			}
+			else if (stage == 3)
+			{
+				if (sw == 0 || sw == 3)
+					facing_theta = facing_theta - 10 * t;
+				else
+					facing_theta = facing_theta + 10 * t;
+				if (axis.x > 0.0f)
+				{
+					if (sw == 0)	center = rotate_center + vec3(0, dis * cos(-current_theta), dis * sin(-current_theta));
+					else			center = rotate_center + vec3(0, dis * cos(current_theta), dis * sin(current_theta));
+				}
+				else if (axis.z > 0.0f)
+				{
+					if (sw == 1)	center = rotate_center + vec3(dis * cos(current_theta), dis * sin(current_theta), 0);
+					else			center = rotate_center + vec3(dis * cos(-current_theta), dis * sin(-current_theta), 0);
+				}
+			}
 		}
 		//if it finished rotating
+		else if (rotate_flag == true)
+		{
+			rotate_flag = false;
+			if (stage == 3)
+				sw = (sw + 2) % 4;
+		}
 		else {
 			rotate_flag = false;
 		}
