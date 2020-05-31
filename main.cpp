@@ -190,8 +190,9 @@ void update()
 		cam.current_theta = min(cam.current_theta + t, cam.target_theta);
 		cam.eye = vec3(200 * sqrt(2.0f) * cos(cam.current_theta), 200, 200 * sqrt(2.0f) * sin(cam.current_theta));
 		cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
-
-		back.model_matrix = mat4::translate(back.location)	// rotation around sun
+		back.location = vec3(-10 * sqrt(2.0f) * cos(cam.current_theta), -10, -10 * sqrt(2.0f) * sin(cam.current_theta));
+		back.model_matrix = mat4::translate(back.location)
+			* mat4::rotate(vec3(0, -1, 0), cam.current_theta - PI/4)
 			* mat4::rotate(vec3(-1, 0, 1), -PI / 4)
 			* mat4::scale(500);
 	}
@@ -755,6 +756,7 @@ bool user_init()
 	characters[stage] = std::move(create_characters2());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
+	stage_camera_zoom[2] = 1.5f;
 
 	// Stage 3.
 	stage = 3;
