@@ -6,6 +6,8 @@
 #include "block.h"
 #include "trigger.h"
 #include "character.h"
+#include "irrKlang\irrKlang.h"
+#pragma comment(lib, "irrKlang/irrKlang.lib")
 
 //*************************************
 // global constants
@@ -13,6 +15,11 @@ static const char*	window_name = "team dreamlike";
 static const char*	vert_shader_path = "../dreamlike.vert";
 static const char*	frag_shader_path = "../dreamlike.frag";
 static const char*  back_tex_path = "./bin/back/back_1024.jpg";
+static const char*	back_music_path = "./bin/sounds/back_music.mp3";
+
+irrklang::ISoundEngine* engine;
+irrklang::ISoundSource* back_mp3_src = nullptr;
+irrklang::ISoundSource* cat_mp3_src = nullptr;
 
 mesh2* catMesh[5];
 mesh2* roseMesh[5];
@@ -82,13 +89,13 @@ struct camera
 
 struct back_t
 {
-	vec3	location = vec3(-10, -10, -10);
+	vec3	location = vec3(-100, -100, -100);
 	Texture* tex;
 	float	current_theta = PI / 4.0f;
 	float	target_theta = PI / 4.0f;
 	mat4	model_matrix = mat4::translate(location)	// rotation around sun
 		* mat4::rotate(vec3(-1, 0, 1), -PI / 4)
-		* mat4::scale(500);;
+		* mat4::scale(500);
 };
 
 struct light_t
@@ -191,7 +198,7 @@ void update()
 		cam.current_theta = min(cam.current_theta + t, cam.target_theta);
 		cam.eye = vec3(200 * sqrt(2.0f) * cos(cam.current_theta), 200, 200 * sqrt(2.0f) * sin(cam.current_theta));
 		cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
-		back.location = vec3(-10 * sqrt(2.0f) * cos(cam.current_theta), -10, -10 * sqrt(2.0f) * sin(cam.current_theta));
+		back.location = vec3(-100 * sqrt(2.0f) * cos(cam.current_theta), -100, -100 * sqrt(2.0f) * sin(cam.current_theta));
 		back.model_matrix = mat4::translate(back.location)
 			* mat4::rotate(vec3(0, -1, 0), cam.current_theta - PI/4)
 			* mat4::rotate(vec3(-1, 0, 1), -PI / 4)
@@ -751,7 +758,6 @@ bool user_init()
 	create_block_vertex_array();
 	create_trigger_vertex_array();
 	create_back_vertex_array();
-
 	create_cat_mesh();
 	create_rose_mesh();
 
@@ -806,7 +812,19 @@ bool user_init()
 
 	stage = 3;
 
-	light_left.position = vec4(-100.0f, 0.0f, 0.0f, 1.0f);
+
+	engine = irrklang::createIrrKlangDevice();
+	if (!engine) return false;
+
+	//add sound source from the sound file
+	back_mp3_src = engine->addSoundSourceFromFile(back_music_path);
+
+	//set default volume
+	back_mp3_src->setDefaultVolume(0.5f);
+
+	//play the sound file
+	engine->play2D(back_mp3_src, true);
+	printf("> playing %s\n", "mp3");
 
 	return true;
 }
@@ -819,6 +837,11 @@ void user_finalize()
 	delete catMesh[0];
 	delete catMesh[1];
 	delete catMesh[2];
+	delete roseMesh[0];
+	delete roseMesh[1];
+	delete roseMesh[2];
+
+	engine->drop();
 }
 
 int main( int argc, char* argv[] )
