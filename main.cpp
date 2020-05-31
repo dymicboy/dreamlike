@@ -748,7 +748,6 @@ bool user_init()
 	characters[stage] = std::move(create_characters2());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
-	stage_camera_zoom[2] = 1.5f;
 
 	// Stage 3.
 	stage = 3;
@@ -764,6 +763,9 @@ bool user_init()
 	characters[stage] = std::move(create_characters3());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
+	obstacles[stage].push_back(&rotate_blocks[stage][1]);
+	obstacles[stage].push_back(&rotate_blocks[stage][2]);
+	obstacles[stage].push_back(&rotate_blocks[stage][3]);
 
 	stage = 3;
 
