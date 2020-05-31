@@ -13,11 +13,12 @@ static const char*	window_name = "team dreamlike";
 static const char*	vert_shader_path = "../dreamlike.vert";
 static const char*	frag_shader_path = "../dreamlike.frag";
 static const char*	mesh_obj = "./bin/Cat/12221_Cat_v1_l3.obj";
+static const char*  back_tex_path = "./bin/back/back_1024.jpg";
 
 mesh2* catMesh[5];
 
-GLuint	block_vertex_array = 0;	// ID holder for block vertex array object
-
+GLuint	block_vertex_array = 0;
+GLuint	back_vertex_array = 0;	
 GLuint	trigger_vertex_array[5][5] = { 0 };	// [shape][floor]
 
 std::vector<block_t> blocks[TOTAL_STAGE];				// 5개 스테이지, 기본 블럭
@@ -78,6 +79,17 @@ struct camera
 	};
 };
 
+struct back_t
+{
+	vec3	location = vec3(-10, -10, -10);
+	Texture* tex;
+	float	current_theta = PI / 4.0f;
+	float	target_theta = PI / 4.0f;
+	mat4	model_matrix = mat4::translate(location)	// rotation around sun
+		* mat4::rotate(vec3(0,0,1), -PI / 4)
+		* mat4::scale(5);
+};
+
 struct light_t
 {
 	vec4	position = vec4(+10.0f, +25.0f, +10.0f, 0.0f);   // directional light
@@ -111,6 +123,7 @@ int		frame = 0;				// index of rendering frames
 // scene objects
 mesh*		pMesh = nullptr;
 camera		cam;
+back_t		back;
 light_t		light;
 material_t	material;
 
@@ -155,6 +168,7 @@ void update()
 		current_frame_time = float(glfwGetTime());
 		last_frame_time = current_frame_time;
 	}
+
 	if (stage_change == 1) {
 		if (stage_change_t > 0.0f) {
 			stage_change_t = stage_change_t - t;
@@ -213,6 +227,15 @@ void render()
 	glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 	// notify GL that we use our own program
 	glUseProgram(program);
+
+	glBindVertexArray(back_vertex_array);
+	glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, back.model_matrix);
+	glBindTexture(GL_TEXTURE_2D, back.tex->id);
+	glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+	glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+	glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 	glBindVertexArray(block_vertex_array);
 	for (auto& s : blocks[stage])
 	{
@@ -250,9 +273,7 @@ void render()
 		glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
 		glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
 		glUniform1i(glGetUniformLocation(program, "use_texture"), true);
-		// render vertices: trigger shader programs to process vertex data
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh->index_buffer);
-		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, nullptr);
 		
 		if (lever_activate && cat_jump && s.falling != 0) s.update(t, obstacles[stage]);
 		else cat_jump = 0;
@@ -295,8 +316,6 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 	{
 		if (key == GLFW_KEY_UP)
 			for (auto& s : characters[stage]) s.front_button(1);
-		if (key == GLFW_KEY_DOWN)
-			for (auto& s : characters[stage]) s.back_button(1);
 		if (key == GLFW_KEY_LEFT)
 			for (auto& s : characters[stage]) s.left_button(1);
 		if (key == GLFW_KEY_RIGHT)
@@ -352,8 +371,6 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 
 		if (key == GLFW_KEY_UP)
 			for (auto& s : characters[stage]) s.front_button(0);
-		if (key == GLFW_KEY_DOWN)
-			for (auto& s : characters[stage]) s.back_button(0);
 		if (key == GLFW_KEY_LEFT)
 			for (auto& s : characters[stage]) s.left_button(0);
 		if (key == GLFW_KEY_RIGHT)
@@ -560,6 +577,45 @@ void create_cat_vertex_array()
 	catMesh[2] = load_model(mesh_obj, false, 1, 0.01f); // floor y
 
 }
+void create_back_vertex_array()
+{
+	std::vector<uint> indices;
+	std::vector<vertex> vertices;
+	
+
+	vertices.push_back({ vec3(-1,0,-1), vec3(0), vec2(0,0) });
+	vertices.push_back({ vec3(1,0,-1), vec3(0), vec2(10,0) });
+	vertices.push_back({ vec3(1,0,1), vec3(0), vec2(10,1) });
+	vertices.push_back({ vec3(-1,0,1), vec3(0), vec2(0,10) });
+
+	indices.push_back(0); indices.push_back(3); indices.push_back(1);
+	indices.push_back(1); indices.push_back(3); indices.push_back(2);
+
+	back.tex = load_path_texture(back_tex_path);
+
+	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
+	static GLuint index_buffer = 0;		// ID holder for index buffer
+
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
+
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+
+	// geneation of index buffer
+	glGenBuffers(1, &index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (back_vertex_array) glDeleteVertexArrays(1, &back_vertex_array);
+	back_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
+
+
+}
 void create_trigger_vertex_array()
 {
 	std::vector<uint> indices;
@@ -651,6 +707,7 @@ bool user_init()
 	create_block_vertex_array();
 	create_cat_vertex_array();
 	create_trigger_vertex_array();
+	create_back_vertex_array();
 
 	// Stage 0.
 	stage = 0;

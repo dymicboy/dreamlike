@@ -92,11 +92,58 @@ Texture* load_texture(const aiMaterial* ai_material, const fs::path& model_direc
 
         // release the new image
         free(pimage);
-
+        printf("Load [%s] complete!\n", texture_path.string().c_str());
         return texture_cache[texture_path.string()] = tex;
     }
 
     return nullptr;
+}
+
+Texture* load_path_texture(const std::string& path)
+{
+    fs::path texture_path(path);
+
+    // check if texture exists, or not.
+    if (!fs::exists(texture_path)) {
+        printf("Texture [%s] does NOT exist!\n", texture_path.string().c_str());
+        return nullptr;
+    }
+
+    // key is texture path in material.
+    if (texture_cache.find(texture_path.string()) != texture_cache.end()) {
+        return texture_cache[texture_path.string()];
+    }
+    // load texture using stb image loader.
+    int width, height, comp;
+    unsigned char* pimage0 = stbi_load(texture_path.string().c_str(), &width, &height, &comp, 0);
+    unsigned char* pimage = (unsigned char*)malloc(sizeof(unsigned char) * width * height * comp);
+    for (int y = 0, stride = width * comp; y < height; y++) memcpy(pimage + (height - 1 - y) * stride, pimage0 + y * stride, stride); // vertical flip
+    stbi_image_free(pimage0); // release the original image
+    Texture* tex = new Texture;
+    tex->path = texture_path.string();
+
+    // create OpenGL texture
+    glGenTextures(1, &tex->id);
+    glBindTexture(GL_TEXTURE_2D, tex->id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8 /* GL_RGB for legacy GL */, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pimage);
+
+    // allocate and create mipmap
+    int mip_levels = miplevels(window_size.x, window_size.y);
+    for (int k = 1, w = width >> 1, h = height >> 1; k < mip_levels; k++, w = max(1, w >> 1), h = max(1, h >> 1))
+        glTexImage2D(GL_TEXTURE_2D, k, GL_RGB8 /* GL_RGB for legacy GL */, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // configure texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    // release the new image
+    free(pimage);
+    printf("Load [%s] complete!\n", texture_path.string().c_str());
+    return texture_cache[texture_path.string()] = tex;
+
 }
 
 mesh2* load_model(const std::string& path, bool bFlipUV, int floor, float size)
