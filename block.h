@@ -154,7 +154,6 @@ inline std::vector<block_t> create_blocks1()
 	blocks.push_back(init_block(vec3(-7 * block_size, -2 * block_size, -1 * block_size)));
 	blocks.push_back(init_block(vec3(-7 * block_size, -2 * block_size, +0 * block_size)));
 	// Main Road to the Goal.
-	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -5 * block_size)));
 	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -6 * block_size)));
 	blocks.push_back(init_block(vec3(-2 * block_size, -2 * block_size, -7 * block_size)));
 	blocks.push_back(init_block(vec3(-3 * block_size, -2 * block_size, -7 * block_size)));

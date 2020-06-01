@@ -10,6 +10,9 @@
 #include "irrKlang\irrKlang.h"
 #pragma comment(lib, "irrKlang/irrKlang.lib")
 
+bool init_text();
+void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, GLfloat dpi_scale = 1.0f);
+
 //*************************************
 // global constants
 static const char*	window_name = "team dreamlike";
@@ -37,6 +40,8 @@ std::vector<block_t> blocks[TOTAL_STAGE];				// 5개 스테이지, 기본 블럭
 std::vector<block_t> rotate_blocks[TOTAL_STAGE][4];		// 5개 스테이지, 최대 4개의 rotating group
 std::vector<trigger_t> triggers[TOTAL_STAGE][12];			// 5개 스테이지, triggers group
 std::vector<particle_t> particles;
+
+vec3 block_color[5];
 
 //multiple character use available
 std::vector<character_t>	characters[5];
@@ -225,7 +230,7 @@ void render()
 	glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 	// notify GL that we use our own program
 	glUseProgram(program);
-
+	
 	glBindVertexArray(back_vertex_array);
 	glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, back.model_matrix);
 	glBindTexture(GL_TEXTURE_2D, back.tex->id);
@@ -233,6 +238,9 @@ void render()
 	glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
+
+	glUniform1i(glGetUniformLocation(program, "use_color"), true);
+	glUniform4fv(glGetUniformLocation(program, "color"), 1, vec4(block_color[stage],1));
 	glUniform1i(glGetUniformLocation(program, "use_texture"), false);
 	glBindVertexArray(block_vertex_array);
 	for (auto& s : blocks[stage])
@@ -295,6 +303,10 @@ void render()
 			}
 			else {
 				glBindVertexArray(trigger_vertex_array[s.shape][s.floor]);
+				glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+				glUniform1i(glGetUniformLocation(program, "use_color"), true);
+				vec4 temp_color = vec4(vec3(block_color[stage].z, block_color[stage].x , block_color[stage].y), 1);
+				glUniform4fv(glGetUniformLocation(program, "color"), 1, temp_color);
 				glDrawElements(GL_TRIANGLES, 8 * 3, GL_UNSIGNED_INT, nullptr);
 			}
 		}
@@ -580,22 +592,22 @@ void create_block_vertex_array()
 	std::vector<vertex> vertices;
 
 	//create vertices
-	vertices.push_back({ vec3(-0.5,-0.5,-0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
-	vertices.push_back({ vec3(0.5,-0.5,-0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
-	vertices.push_back({ vec3(0.5,0.5,-0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
-	vertices.push_back({ vec3(-0.5,0.5,-0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+	vertices.push_back({ vec3(-0.5,-0.5,-0.5), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(0.5,-0.5,-0.5), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(0.5,0.5,-0.5), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(-0.5,0.5,-0.5), vec3(1), vec2(0,0) });
 
-	vertices.push_back({ vec3(-0.5,-0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
-	vertices.push_back({ vec3(0.5,-0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
-	vertices.push_back({ vec3(0.5,0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
-	vertices.push_back({ vec3(-0.5,0.5,0.5), vec3(145.0f/255, 162.0f/255, 1.0f), vec2(0,0) });
+	vertices.push_back({ vec3(-0.5,-0.5,0.5), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(0.5,-0.5,0.5), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(0.5,0.5,0.5), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(-0.5,0.5,0.5), vec3(1), vec2(0,0) });
 
-	vertices.push_back({ vec3(0,0,-0.5), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
-	vertices.push_back({ vec3(0,0,0.5), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
-	vertices.push_back({ vec3(0.5,0,0), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
-	vertices.push_back({ vec3(0,-0.5,0), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
-	vertices.push_back({ vec3(-0.5,0,0), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
-	vertices.push_back({ vec3(0,0.5,0), vec3(1.0f, 1.0f, 1.0f), vec2(1,1) });
+	vertices.push_back({ vec3(0,0,-0.5), vec3(1.5), vec2(1,1) });
+	vertices.push_back({ vec3(0,0,0.5), vec3(1.5), vec2(1,1) });
+	vertices.push_back({ vec3(0.5,0,0), vec3(1.5), vec2(1,1) });
+	vertices.push_back({ vec3(0,-0.5,0), vec3(1.5), vec2(1,1) });
+	vertices.push_back({ vec3(-0.5,0,0), vec3(1.5), vec2(1,1) });
+	vertices.push_back({ vec3(0,0.5,0), vec3(1.5), vec2(1,1) });
 
 	//create indices
 	//bottom
@@ -708,14 +720,14 @@ void create_trigger_vertex_array()
 	//******************************************************************************************//
 	// 0 : zone shape trigger
 	//create vertices
-	vertices.push_back({ vec3(-0.5f,-0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
-	vertices.push_back({ vec3(0.5f,-0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
-	vertices.push_back({ vec3(0.5f,0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
-	vertices.push_back({ vec3(-0.5f,0.5f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
-	vertices.push_back({ vec3(-0.3f,-0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
-	vertices.push_back({ vec3(0.3f,-0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
-	vertices.push_back({ vec3(0.3f,0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
-	vertices.push_back({ vec3(-0.3f,0.3f,0), vec3(1.0f, 0.0f, 0.0f), vec2(0,0) });
+	vertices.push_back({ vec3(-0.5f,-0.5f,0), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(0.5f,-0.5f,0), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(0.5f,0.5f,0), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(-0.5f,0.5f,0), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(-0.3f,-0.3f,0), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(0.3f,-0.3f,0), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(0.3f,0.3f,0), vec3(1), vec2(0,0) });
+	vertices.push_back({ vec3(-0.3f,0.3f,0), vec3(1), vec2(0,0) });
 	//create indices
 	indices.push_back(0); indices.push_back(1); indices.push_back(4);
 	indices.push_back(4); indices.push_back(1); indices.push_back(5);
@@ -859,7 +871,8 @@ bool user_init()
 	characters[stage]		= std::move(create_characters0());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
-	stage_camera_zoom[0] = 1.0f;
+	stage_camera_zoom[stage] = 1.0f;
+	block_color[stage] = vec3(145.0f / 255, 162.0f / 255, 1.0f);
 
 	// Stage 1.
 	stage = 1;
@@ -870,7 +883,8 @@ bool user_init()
 	characters[stage]		= std::move(create_characters1());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
-	stage_camera_zoom[1] = 1.0f;
+	stage_camera_zoom[stage] = 1.0f;
+	block_color[stage] = vec3(255.0f / 255, 215.0f / 255, 145.0f / 255);
 
 	// Stage 2.
 	stage = 2;
@@ -891,7 +905,8 @@ bool user_init()
 	characters[stage] = std::move(create_characters2());
 	obstacles[stage].push_back(&blocks[stage]);
 	obstacles[stage].push_back(&rotate_blocks[stage][0]);
-	stage_camera_zoom[2] = 1.5f;
+	stage_camera_zoom[stage] = 1.5f;
+	block_color[stage] = vec3(167.0f / 255, 237.0f / 255, 138.0f / 255);
 
 	// Stage 3.
 	stage = 3;
@@ -910,9 +925,10 @@ bool user_init()
 	obstacles[stage].push_back(&rotate_blocks[stage][1]);
 	obstacles[stage].push_back(&rotate_blocks[stage][2]);
 	obstacles[stage].push_back(&rotate_blocks[stage][3]);
-	stage_camera_zoom[3] = 1.5f;
+	stage_camera_zoom[stage] = 1.5f;
+	block_color[stage] = vec3(145.0f / 255, 225.0f / 255, 255.0f / 255);
 
-	stage = 3;
+	stage = 1;
 
 	engine = irrklang::createIrrKlangDevice();
 	if (!engine) return false;
@@ -929,7 +945,16 @@ bool user_init()
 
 	//play the sound file
 	engine->play2D(back_mp3_src, true);
-	printf("> playing %s\n", "mp3");
+	printf("playing background music");
+
+	if (!init_text()) {
+		printf("text init failed\n"); return false;
+	}
+	else {
+		printf("text init complete!\n");
+	}
+
+	printf("Game Start");
 
 	return true;
 }
