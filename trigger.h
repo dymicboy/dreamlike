@@ -48,7 +48,6 @@ inline std::vector<trigger_t> create_triggers0_0()
 inline std::vector<trigger_t> create_triggers0_1()
 {
 	std::vector<trigger_t> triggers;
-	triggers.push_back(init_trigger(vec3(-5 * block_size, -2 * block_size, -2 * block_size), 4, 2));
 	triggers.push_back(init_trigger(vec3(-5 * block_size, -2 * block_size, -2 * block_size), 4, 2, 5));
 	return triggers;
 }
@@ -64,7 +63,6 @@ inline std::vector<trigger_t> create_triggers1_0()
 inline std::vector<trigger_t> create_triggers1_1()
 {
 	std::vector<trigger_t> triggers;
-	triggers.push_back(init_trigger(vec3(-4 * block_size, -2 * block_size, -7 * block_size), 4, 2));
 	triggers.push_back(init_trigger(vec3(-4 * block_size, -2 * block_size, -7 * block_size), 4, 2, 5));
 	return triggers;
 }
@@ -161,7 +159,6 @@ inline std::vector<trigger_t> create_triggers2_11()
 {
 	std::vector<trigger_t> triggers;
 	// Top.
-	triggers.push_back(init_trigger(vec3(+2 * block_size, +2 * block_size, -3 * block_size), 4, 2));
 	triggers.push_back(init_trigger(vec3(+2 * block_size, +2 * block_size, -3 * block_size), 4, 2, 5));
 	return triggers;
 }
@@ -176,21 +173,21 @@ inline std::vector<trigger_t> create_triggers3_0()
 inline std::vector<trigger_t> create_triggers3_1()
 {
 	std::vector<trigger_t> triggers;
-	triggers.push_back(init_trigger(vec3(+2 * block_size, +3 * block_size, -3 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(+3 * block_size, +0 * block_size, +3 * block_size), 4, 2));
 	return triggers;
 }
 
 inline std::vector<trigger_t> create_triggers3_2()
 {
 	std::vector<trigger_t> triggers;
-	triggers.push_back(init_trigger(vec3(-3 * block_size, +3 * block_size, -3 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(+0 * block_size, +0 * block_size, -4 * block_size), 4, 2));
 	return triggers;
 }
 
 inline std::vector<trigger_t> create_triggers3_3()
 {
 	std::vector<trigger_t> triggers;
-	triggers.push_back(init_trigger(vec3(-3 * block_size, +3 * block_size, +2 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(+5 * block_size, +2 * block_size, -2 * block_size), 4, 2, 5));
 	return triggers;
 }
 
