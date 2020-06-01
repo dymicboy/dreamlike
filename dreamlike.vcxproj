@@ -65,6 +65,7 @@
     <ClInclude Include="cgut.h" />
     <ClInclude Include="block.h" />
     <ClInclude Include="character.h" />
+    <ClInclude Include="particle.h" />
     <ClInclude Include="trigger.h" />
   </ItemGroup>
   <ItemGroup>

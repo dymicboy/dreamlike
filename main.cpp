@@ -5,6 +5,7 @@
 #include "stb_image.h"
 #include "block.h"
 #include "trigger.h"
+#include "particle.h"
 #include "character.h"
 #include "irrKlang\irrKlang.h"
 #pragma comment(lib, "irrKlang/irrKlang.lib")
@@ -28,12 +29,14 @@ mesh2* catMesh[5];
 mesh2* roseMesh[5];
 
 GLuint	block_vertex_array = 0;
+GLuint	sphere_vertex_array = 0;
 GLuint	back_vertex_array = 0;	
 GLuint	trigger_vertex_array[5][5] = { 0 };	// [shape][floor]
 
 std::vector<block_t> blocks[TOTAL_STAGE];				// 5개 스테이지, 기본 블럭
 std::vector<block_t> rotate_blocks[TOTAL_STAGE][4];		// 5개 스테이지, 최대 4개의 rotating group
 std::vector<trigger_t> triggers[TOTAL_STAGE][12];			// 5개 스테이지, triggers group
+std::vector<particle_t> particles;
 
 //multiple character use available
 std::vector<character_t>	characters[5];
@@ -171,6 +174,15 @@ void update()
 			stage = next_stage;
 			stage_change_t = stage_change_t - t;
 			camera_zoom -= stage_change_t * stage_change_t/10;
+			cam.current_theta = PI / 4.0f;
+			cam.target_theta = PI / 4.0f;
+			cam.eye = vec3(200 * sqrt(2.0f) * cos(cam.current_theta), 200, 200 * sqrt(2.0f) * sin(cam.current_theta));
+			cam.view_matrix = mat4::look_at(cam.eye, cam.at, cam.up);
+			back.location = vec3(-100 * sqrt(2.0f) * cos(cam.current_theta), -100, -100 * sqrt(2.0f) * sin(cam.current_theta));
+			back.model_matrix = mat4::translate(back.location)
+				* mat4::rotate(vec3(0, -1, 0), cam.current_theta - PI / 4)
+				* mat4::rotate(vec3(-1, 0, 1), -PI / 4)
+				* mat4::scale(500);
 			if (camera_zoom <= stage_camera_zoom[stage]) {
 				stage_change = 0;
 				camera_zoom = stage_camera_zoom[stage];
@@ -248,6 +260,7 @@ void render()
 		{
 			s.update(t);
 			glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+			//rose
 			if (s.shape == 5) {
 				glBindVertexArray(roseMesh[s.floor]->vertex_array);
 				for (size_t k = 0, kn = roseMesh[s.floor]->geometry_list.size(); k < kn; k++) {
@@ -265,6 +278,20 @@ void render()
 					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, roseMesh[s.floor]->index_buffer);
 					glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 				}
+				glBindVertexArray(sphere_vertex_array);
+				for (auto& p : particles) {
+					if(s.floor == 0) p.update(s.center + vec3(0,0, s.size / 2), t);
+					if (s.floor == 1) p.update(s.center + vec3(s.size / 2, 0,0), t);
+					if (s.floor == 2) p.update(s.center + vec3(0, s.size/2,0), t);
+					
+					glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+					glUniform1i(glGetUniformLocation(program, "use_color"), true);
+					glUniform4fv(glGetUniformLocation(program, "color"), 1, p.color);
+					glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, p.model_matrix);
+					glDrawElements(GL_TRIANGLES, 21 * 20 * 6, GL_UNSIGNED_INT, nullptr);
+				}
+				glUniform1i(glGetUniformLocation(program, "use_color"), false);
+
 			}
 			else {
 				glBindVertexArray(trigger_vertex_array[s.shape][s.floor]);
@@ -331,6 +358,8 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 	{
 		if (key == GLFW_KEY_UP)
 			for (auto& s : characters[stage]) s.front_button(1);
+		if (key == GLFW_KEY_DOWN)
+			for (auto& s : characters[stage]) s.back_button(1);
 		if (key == GLFW_KEY_LEFT)
 			for (auto& s : characters[stage]) s.left_button(1);
 		if (key == GLFW_KEY_RIGHT)
@@ -417,6 +446,8 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 
 		if (key == GLFW_KEY_UP)
 			for (auto& s : characters[stage]) s.front_button(0);
+		if (key == GLFW_KEY_DOWN)
+			for (auto& s : characters[stage]) s.back_button(0);
 		if (key == GLFW_KEY_LEFT)
 			for (auto& s : characters[stage]) s.left_button(0);
 		if (key == GLFW_KEY_RIGHT)
@@ -735,6 +766,65 @@ void create_trigger_vertex_array()
 
 }
 
+void create_sphere_vertices()
+{
+
+	std::vector<uint> indices;
+	std::vector<vertex> vertices;
+
+	//create bottom
+	for (int i = 0; i < 20; i++) {
+		vertices.push_back({ vec3(0,0,-1), vec3(0,0,-1.0f), vec2(float(i) / 20, 0) });
+	}
+
+	for (int i = 0; i < 20; i++) {
+		float t = PI * i / float(20), c = cos(t), s = sin(t);
+		for (int j = 0; j < 20; j++) {
+			float p = PI * 2.0f * j / float(20), pc = cos(p), ps = sin(p);
+			vertices.push_back({ vec3(pc * s,ps * s,-c), vec3(0,0,-1.0f), vec2(float(j) / 20,float(i) / 20) });
+		}
+	}
+	//create top
+	for (int i = 0; i < 20; i++) {
+		float t = PI * i / float(100), c = cos(t), s = sin(t);
+		vertices.push_back({ vec3(0,0,1), vec3(0,0,-1.0f), vec2(float(i) / 100, 1) });
+	}
+
+	//create indices
+	for (int i = 0; i < 20 + 1; i++) {
+		for (int j = 0; j < 20; j++) {
+			indices.push_back(j + i * 20);
+			indices.push_back((j + 1) % 20 + (i + 1) * 20);
+			indices.push_back(j + (i + 1) * 20);
+
+			indices.push_back(j + i * 20);
+			indices.push_back((j + 1) % 20 + i * 20);
+			indices.push_back((j + 1) % 20 + (i + 1) * 20);
+		}
+	}
+	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
+	static GLuint index_buffer = 0;		// ID holder for index buffer
+
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
+
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+
+	// geneation of index buffer
+	glGenBuffers(1, &index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (sphere_vertex_array) glDeleteVertexArrays(1, &sphere_vertex_array);
+	sphere_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
+
+}
+
 
 bool user_init()
 {
@@ -754,6 +844,9 @@ bool user_init()
 	create_back_vertex_array();
 	create_cat_mesh();
 	create_rose_mesh();
+	create_sphere_vertices();
+
+	particles.resize(particle_t::MAX_PARTICLES);
 
 	// Stage 0.
 	stage = 0;
@@ -829,8 +922,8 @@ bool user_init()
 
 	//set default volume
 	back_mp3_src->setDefaultVolume(0.7f);
-	cat_mp3_src->setDefaultVolume(0.5f);
-	cat_fall_src->setDefaultVolume(0.5f);
+	cat_mp3_src->setDefaultVolume(0.3f);
+	cat_fall_src->setDefaultVolume(0.3f);
 
 	//play the sound file
 	engine->play2D(back_mp3_src, true);

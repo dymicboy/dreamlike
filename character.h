@@ -14,13 +14,16 @@ struct character_t
 	float	facing_theta		= 0;			// facing direction
 	float	falling				= 0;			// falling variable
 	int		floor				= 0;			// 0 = xy floor with z>0, 1 = yz floor with x>0, 2= xz floor with y>0
+	int		ori_floor			= 0;			// 0 = xy floor with z>0, 1 = yz floor with x>0, 2= xz floor with y>0
 	bool	front_arrow_button	= false;		// front arrow button
+	bool	back_arrow_button	= false;		// back arrow button
 	bool	left_arrow_button	= false;		// left arrow button
 	bool	right_arrow_button	= false;		// right arrow button
 	mat4	model_matrix;						// modeling transformation
 
 	// public functions
 	void	front_button(bool status);
+	void	back_button(bool status);
 	void	left_button(bool status);
 	void	right_button(bool status);
 	void	spacebar_button();
@@ -35,6 +38,7 @@ inline character_t init_character( vec3 _center, float _facing= 0, int _floor=0)
 	temp.location		= _center;
 	temp.facing_theta	= _facing;
 	temp.floor			= _floor;
+	temp.ori_floor		= _floor;
 
 	return temp;
 }
@@ -73,6 +77,7 @@ inline std::vector<character_t> create_characters3()
 }
 
 inline void character_t::front_button(bool status){ front_arrow_button = status; }
+inline void character_t::back_button(bool status) { back_arrow_button = status; }
 inline void character_t::left_button(bool status) { left_arrow_button = status; }
 inline void character_t::right_button(bool status) { right_arrow_button = status; }
 inline void character_t::spacebar_button() {
@@ -90,7 +95,8 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 {
 	int moving = 0;
 	int rotating = 0;
-	if (front_arrow_button) moving += 2;
+	if (front_arrow_button) moving += 1;
+	if (back_arrow_button) moving -= 1;
 	if (right_arrow_button) rotating -= 1;
 	if (left_arrow_button) rotating += 1;
 
@@ -224,7 +230,10 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 		falling = 0;
 	}
 
-	if (next_location.x < -10.0f || next_location.y < -10.0f || next_location.z < -10.0f) next_location = ori_location;
+	if (next_location.x < -10.0f || next_location.y < -10.0f || next_location.z < -10.0f) {
+		next_location = ori_location;
+		floor = ori_floor;
+	}
 	location = next_location;
 
 	model_matrix = mat4::translate(location)	// rotation around sun

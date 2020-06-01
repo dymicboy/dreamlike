@@ -18,7 +18,17 @@ uniform mat4	view_matrix;
 uniform sampler2D TEX;
 uniform bool use_texture;
 
+uniform vec4 color;
+uniform bool use_color;
+
 void main()
 {
-	fragColor = use_texture ? texture( TEX, tc ) : vec4(norm, 1);
+	if(use_texture)
+		fragColor = texture( TEX, tc );
+	else if(use_color)
+		fragColor = color;
+	else
+		fragColor = vec4(norm, 1);
+	if(fragColor.a < 0.001) discard;
+
 }
