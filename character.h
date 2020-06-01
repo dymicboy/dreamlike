@@ -72,7 +72,7 @@ inline std::vector<character_t> create_characters2()
 inline std::vector<character_t> create_characters3()
 {
 	std::vector<character_t> characters;
-	characters.push_back(init_character(vec3(+2 * block_size, +3 * block_size, +2 * block_size), 0, 2));
+	characters.push_back(init_character(vec3(-3 * block_size, +1 * block_size, -3 * block_size), 0, 2));
 	return characters;
 }
 

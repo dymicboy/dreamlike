@@ -422,7 +422,10 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 						}
 						else if (stage == 3)
 						{
-							if (i == 0) for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
+							if (i == 0)
+							{
+								for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
+							}
 							else if (i == 1) for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
 							else if (i == 2) for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
 							else if (i == 3) for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
@@ -910,7 +913,7 @@ bool user_init()
 	obstacles[stage].push_back(&rotate_blocks[stage][3]);
 	stage_camera_zoom[3] = 1.5f;
 
-	stage = 2;
+	stage = 3;
 
 	engine = irrklang::createIrrKlangDevice();
 	if (!engine) return false;

@@ -169,7 +169,7 @@ inline std::vector<trigger_t> create_triggers2_11()
 inline std::vector<trigger_t> create_triggers3_0()
 {
 	std::vector<trigger_t> triggers;
-	triggers.push_back(init_trigger(vec3(+2 * block_size, +3 * block_size, +2 * block_size), 4, 2));
+	triggers.push_back(init_trigger(vec3(-3 * block_size, +0 * block_size, -3 * block_size), 4, 2));
 	return triggers;
 }
 
