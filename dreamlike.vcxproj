@@ -58,7 +58,6 @@
     <ClCompile Include="assimp_loader.cpp" />
     <ClCompile Include="gl\glad\glad.c" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="text.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assimp_loader.h" />

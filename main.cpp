@@ -10,9 +10,6 @@
 #include "irrKlang\irrKlang.h"
 #pragma comment(lib, "irrKlang/irrKlang.lib")
 
-bool init_text();
-void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, GLfloat dpi_scale = 1.0f);
-
 //*************************************
 // global constants
 static const char*	window_name = "team dreamlike";
@@ -22,6 +19,18 @@ static const char*  back_tex_path = "./bin/back/back_1024.jpg";
 static const char*	back_music_path = "./bin/sounds/back_music.mp3";
 static const char*	cat_music_path = "./bin/sounds/cat_sound.mp3";
 static const char*	cat_fall_path = "./bin/sounds/cat_fall.mp3";
+
+static const char* picture_tex_path[5] = { 
+	"",
+	"./bin/picture/1.JPG" ,
+	"./bin/picture/2.JPG" ,
+	"./bin/picture/3.JPG" ,
+	"./bin/picture/4.JPG"
+};
+Texture* picture_tex[5];
+GLuint	picture_vertex_array;
+
+int picture_state = 0; //if 0, no picture. 1: title page, 2: story, 3: instruction, 4: ending
 
 irrklang::ISoundEngine* engine;
 irrklang::ISoundSource* back_mp3_src = nullptr;
@@ -106,7 +115,7 @@ struct back_t
 	float	target_theta = PI / 4.0f;
 	mat4	model_matrix = mat4::translate(location)	// rotation around sun
 		* mat4::rotate(vec3(-1, 0, 1), -PI / 4)
-		* mat4::scale(500);
+		* mat4::scale(150);
 };
 
 //*************************************
@@ -155,6 +164,7 @@ mat4 ortho( float fovy, float aspect, float dnear, float dfar, float how_far )
 	return matrix;
 }
 
+
 //*************************************
 void update()
 {
@@ -187,7 +197,7 @@ void update()
 			back.model_matrix = mat4::translate(back.location)
 				* mat4::rotate(vec3(0, -1, 0), cam.current_theta - PI / 4)
 				* mat4::rotate(vec3(-1, 0, 1), -PI / 4)
-				* mat4::scale(500);
+				* mat4::scale(150);
 			if (camera_zoom <= stage_camera_zoom[stage]) {
 				stage_change = 0;
 				camera_zoom = stage_camera_zoom[stage];
@@ -203,11 +213,19 @@ void update()
 		back.model_matrix = mat4::translate(back.location)
 			* mat4::rotate(vec3(0, -1, 0), cam.current_theta - PI/4)
 			* mat4::rotate(vec3(-1, 0, 1), -PI / 4)
-			* mat4::scale(500);
+			* mat4::scale(150);
 	}
 	else {
 		lever_activate = 0;
 	}
+
+	float width_ratio = 1.0f, height_ratio = 1.0f;
+	// Calculate Ratio of Window  (Edge is Relative Value)
+	if (window_size.x > window_size.y)
+		width_ratio = float(window_size.x) / float(window_size.y);
+	else if (window_size.x < window_size.y)
+		height_ratio = float(window_size.y) / float(window_size.x);
+
 	// update projection matrix
 	cam.aspect = window_size.x/float(window_size.y);
 	//cam.projection_matrix = mat4::perspective( cam.fovy, cam.aspect, cam.dnear, cam.dfar );
@@ -228,8 +246,20 @@ void render()
 	// clear screen (with background color) and clear depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+	glUniform1i(glGetUniformLocation(program, "screen"), false);
 	// notify GL that we use our own program
 	glUseProgram(program);
+
+	if (picture_state != 0) {
+		glUniform1i(glGetUniformLocation(program, "screen"), true );
+		glBindVertexArray(picture_vertex_array);
+		glBindTexture(GL_TEXTURE_2D, picture_tex[picture_state]->id);
+		glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+		glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		glfwSwapBuffers(window);
+		return;
+	}
 	
 	glBindVertexArray(back_vertex_array);
 	glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, back.model_matrix);
@@ -335,7 +365,6 @@ void render()
 			s.update(t, obstacles[stage]);
 		if (s.location.x - tmp.x > 7 || s.location.y - tmp.y > 7 || s.location.z - tmp.z > 7) engine->play2D(cat_fall_src);
 	}
-	
 	// swap front and back buffers, and display to screen
 	glfwSwapBuffers(window);
 }
@@ -348,8 +377,8 @@ void reshape( GLFWwindow* window, int width, int height )
 	glViewport( 0, 0, width, height );
 }
 
-void goto_next_stage() {
-	next_stage = (stage + 1) % 4;//TOTAL_STAGE;
+void goto_next_stage(int addi = 0) {
+	next_stage = (stage + 1 + addi) % 4;//TOTAL_STAGE;
 	stage_change = 1;
 	stage_change_t = 1.5f;
 	printf("stage : %d\n", next_stage);
@@ -373,9 +402,9 @@ void reset()
 		triggers[stage][0] = std::move(create_triggers0_0());
 		triggers[stage][1] = std::move(create_triggers0_1());
 		characters[stage] = std::move(create_characters0());
+		obstacles[stage].clear();
 		obstacles[stage].push_back(&blocks[stage]);
 		obstacles[stage].push_back(&rotate_blocks[stage][0]);
-		//stage_camera_zoom[0] = 1.0f;
 	}
 	else if (stage == 1)
 	{
@@ -384,9 +413,9 @@ void reset()
 		triggers[stage][0] = std::move(create_triggers1_0());
 		triggers[stage][1] = std::move(create_triggers1_1());
 		characters[stage] = std::move(create_characters1());
+		obstacles[stage].clear();
 		obstacles[stage].push_back(&blocks[stage]);
 		obstacles[stage].push_back(&rotate_blocks[stage][0]);
-		//stage_camera_zoom[1] = 1.0f;
 	}
 	else if (stage == 2)
 	{
@@ -405,9 +434,9 @@ void reset()
 		triggers[stage][10] = std::move(create_triggers2_10());
 		triggers[stage][11] = std::move(create_triggers2_11());
 		characters[stage] = std::move(create_characters2());
+		obstacles[stage].clear();
 		obstacles[stage].push_back(&blocks[stage]);
 		obstacles[stage].push_back(&rotate_blocks[stage][0]);
-		//stage_camera_zoom[2] = 1.5f;
 	}
 	else if (stage == 3)
 	{
@@ -421,12 +450,12 @@ void reset()
 		triggers[stage][2] = std::move(create_triggers3_2());
 		triggers[stage][3] = std::move(create_triggers3_3());
 		characters[stage] = std::move(create_characters3());
+		obstacles[stage].clear();
 		obstacles[stage].push_back(&blocks[stage]);
 		obstacles[stage].push_back(&rotate_blocks[stage][0]);
 		obstacles[stage].push_back(&rotate_blocks[stage][1]);
 		obstacles[stage].push_back(&rotate_blocks[stage][2]);
 		obstacles[stage].push_back(&rotate_blocks[stage][3]);
-		//stage_camera_zoom[3] = 1.5f;
 	}
 }
 
@@ -446,13 +475,21 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			engine->play2D(cat_mp3_src);
 			for (auto& s : characters[stage]) s.spacebar_button();
 		}
-		if (key == GLFW_KEY_E) {
-			reset();
-			stage--;
-			goto_next_stage();
+		if (key == GLFW_KEY_R) {
+			if (!stage_change) {
+				reset();
+				goto_next_stage(-1);
+			}
+		}
+		if (key == GLFW_KEY_ENTER) {
+			printf("entered %d\n",picture_state);
+			if (picture_state == 1) picture_state = 2;
+			else if (picture_state == 2) picture_state = 3;
+			else if (picture_state == 3) picture_state = 0;
+			else if (picture_state == 0) picture_state = 3;
 		}
 
-		if (key == GLFW_KEY_R) {
+		if (key == GLFW_KEY_LEFT_SHIFT) {
 			engine->play2D(cat_mp3_src);
 			if (lever_activate == 0) {
 				bool triger_on = false;
@@ -521,7 +558,7 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 								for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
 								for (auto& s : characters[stage]) { s.ori_location = vec3(+1 * block_size, +3 * block_size, +8 * block_size); s.location = s.ori_location; s.update(t, obstacles[stage]); }
 							}
-							else if (i == 3) printf("Game End!!\n");
+							else if (i == 3) picture_state = 4;
 						}
 						break;
 					}
@@ -549,7 +586,8 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		if (key == GLFW_KEY_RIGHT)
 			for (auto& s : characters[stage]) s.right_button(0);
 		if (key == GLFW_KEY_T)
-			goto_next_stage();
+			if(!stage_change)
+				goto_next_stage();
 		if (key == GLFW_KEY_M)
 		{
 			if (lever_activate == 0 && eye_state[stage] != 0) {
@@ -755,7 +793,6 @@ void create_rose_mesh()
 	roseMesh[1] = load_model("./bin/rose/rose.obj", false, 1, 0.01f); // floor x
 	roseMesh[2] = load_model("./bin/rose/rose.obj", false, 2, 0.01f); // floor y
 }
-
 void create_back_vertex_array()
 {
 	std::vector<uint> indices;
@@ -763,9 +800,9 @@ void create_back_vertex_array()
 	
 
 	vertices.push_back({ vec3(-1,0,-1), vec3(0), vec2(0,0) });
-	vertices.push_back({ vec3(1,0,-1), vec3(0), vec2(300,0) });
-	vertices.push_back({ vec3(1,0,1), vec3(0), vec2(300,300) });
-	vertices.push_back({ vec3(-1,0,1), vec3(0), vec2(0,300) });
+	vertices.push_back({ vec3(1,0,-1), vec3(0), vec2(70,0) });
+	vertices.push_back({ vec3(1,0,1), vec3(0), vec2(70,70) });
+	vertices.push_back({ vec3(-1,0,1), vec3(0), vec2(0,70) });
 
 	indices.push_back(0); indices.push_back(3); indices.push_back(1);
 	indices.push_back(1); indices.push_back(3); indices.push_back(2);
@@ -792,6 +829,42 @@ void create_back_vertex_array()
 	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
 	if (back_vertex_array) glDeleteVertexArrays(1, &back_vertex_array);
 	back_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
+}
+
+void create_picture_vertex_array()
+{
+	std::vector<uint> indices;
+	std::vector<vertex> vertices;
+
+	vertices.push_back({ vec3(-1,-1,0), vec3(0), vec2(0,0) });
+	vertices.push_back({ vec3(1,-1,0), vec3(0), vec2(1,0) });
+	vertices.push_back({ vec3(1,1,0), vec3(0), vec2(1,1) });
+	vertices.push_back({ vec3(-1,1,0), vec3(0), vec2(0,1) });
+
+	indices.push_back(0); indices.push_back(1); indices.push_back(3);
+	indices.push_back(1); indices.push_back(2); indices.push_back(3);
+
+	picture_tex[0] = load_path_texture(picture_tex_path[0]);
+	picture_tex[1] = load_path_texture(picture_tex_path[1]);
+	picture_tex[2] = load_path_texture(picture_tex_path[2]);
+	picture_tex[3] = load_path_texture(picture_tex_path[3]);
+
+	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
+	static GLuint index_buffer = 0;		// ID holder for index buffer
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	// geneation of index buffer
+	glGenBuffers(1, &index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (picture_vertex_array) glDeleteVertexArrays(1, &picture_vertex_array);
+	picture_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
 }
 void create_trigger_vertex_array()
 {
@@ -940,6 +1013,9 @@ bool user_init()
 	create_cat_mesh();
 	create_rose_mesh();
 	create_sphere_vertices();
+	create_picture_vertex_array();
+
+	picture_state = 1;
 
 	particles.resize(particle_t::MAX_PARTICLES);
 
@@ -1027,14 +1103,6 @@ bool user_init()
 	//play the sound file
 	engine->play2D(back_mp3_src, true);
 	printf("playing background music");
-
-	if (!init_text()) {
-		printf("text init failed\n"); return false;
-	}
-	else {
-		printf("text init complete!\n");
-	}
-
 	printf("Game Start");
 
 	return true;
