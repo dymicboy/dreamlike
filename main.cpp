@@ -352,6 +352,72 @@ void print_help()
 	printf( "\n" );
 }
 
+void reset()
+{
+	if (stage == 0)
+	{
+		blocks[stage] = std::move(create_blocks0());
+		rotate_blocks[stage][0] = std::move(create_rotate_blocks0());
+		triggers[stage][0] = std::move(create_triggers0_0());
+		triggers[stage][1] = std::move(create_triggers0_1());
+		characters[stage] = std::move(create_characters0());
+		obstacles[stage].push_back(&blocks[stage]);
+		obstacles[stage].push_back(&rotate_blocks[stage][0]);
+		//stage_camera_zoom[0] = 1.0f;
+	}
+	else if (stage == 1)
+	{
+		blocks[stage] = std::move(create_blocks1());
+		rotate_blocks[stage][0] = std::move(create_rotate_blocks1());
+		triggers[stage][0] = std::move(create_triggers1_0());
+		triggers[stage][1] = std::move(create_triggers1_1());
+		characters[stage] = std::move(create_characters1());
+		obstacles[stage].push_back(&blocks[stage]);
+		obstacles[stage].push_back(&rotate_blocks[stage][0]);
+		//stage_camera_zoom[1] = 1.0f;
+	}
+	else if (stage == 2)
+	{
+		blocks[stage] = std::move(create_blocks2());
+		rotate_blocks[stage][0] = std::move(create_rotate_blocks2());
+		triggers[stage][0] = std::move(create_triggers2_0());
+		triggers[stage][1] = std::move(create_triggers2_1());
+		triggers[stage][2] = std::move(create_triggers2_2());
+		triggers[stage][3] = std::move(create_triggers2_3());
+		triggers[stage][4] = std::move(create_triggers2_4());
+		triggers[stage][5] = std::move(create_triggers2_5());
+		triggers[stage][6] = std::move(create_triggers2_6());
+		triggers[stage][7] = std::move(create_triggers2_7());
+		triggers[stage][8] = std::move(create_triggers2_8());
+		triggers[stage][9] = std::move(create_triggers2_9());
+		triggers[stage][10] = std::move(create_triggers2_10());
+		triggers[stage][11] = std::move(create_triggers2_11());
+		characters[stage] = std::move(create_characters2());
+		obstacles[stage].push_back(&blocks[stage]);
+		obstacles[stage].push_back(&rotate_blocks[stage][0]);
+		//stage_camera_zoom[2] = 1.5f;
+	}
+	else if (stage == 3)
+	{
+		blocks[stage] = std::move(create_blocks3());
+		rotate_blocks[stage][0] = std::move(create_rotate_blocks3_0());
+		rotate_blocks[stage][1] = std::move(create_rotate_blocks3_1());
+		rotate_blocks[stage][2] = std::move(create_rotate_blocks3_2());
+		rotate_blocks[stage][3] = std::move(create_rotate_blocks3_3());
+		triggers[stage][0] = std::move(create_triggers3_0());
+		triggers[stage][1] = std::move(create_triggers3_1());
+		triggers[stage][2] = std::move(create_triggers3_2());
+		triggers[stage][3] = std::move(create_triggers3_3());
+		characters[stage] = std::move(create_characters3());
+		obstacles[stage].push_back(&blocks[stage]);
+		obstacles[stage].push_back(&rotate_blocks[stage][0]);
+		obstacles[stage].push_back(&rotate_blocks[stage][1]);
+		obstacles[stage].push_back(&rotate_blocks[stage][2]);
+		obstacles[stage].push_back(&rotate_blocks[stage][3]);
+		//stage_camera_zoom[3] = 1.5f;
+	}
+}
+
 void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
 	if(action==GLFW_PRESS && !cat_jump && !lever_activate)
@@ -367,6 +433,11 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		if (key == GLFW_KEY_SPACE) {
 			engine->play2D(cat_mp3_src);
 			for (auto& s : characters[stage]) s.spacebar_button();
+		}
+		if (key == GLFW_KEY_E) {
+			reset();
+			stage--;
+			goto_next_stage();
 		}
 
 		if (key == GLFW_KEY_R) {
@@ -430,12 +501,13 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 							{
 								for (auto& s : rotate_blocks[stage][i - 1]) s.block_rotation(PI / 2);
 								for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
+								for (auto& s : characters[stage]) { s.ori_location = vec3(+3 * block_size, +1 * block_size, +3 * block_size); s.location = s.ori_location; s.update(t, obstacles[stage]); }
 							}
 							else if (i == 2)
 							{
 								for (auto& s : rotate_blocks[stage][i - 1]) s.block_rotation(PI / 2);
 								for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
-								for (auto& s : characters[stage]) { s.location = vec3(+1 * block_size, +2 * block_size, +8 * block_size); s.update(t, obstacles[stage]); }
+								for (auto& s : characters[stage]) { s.ori_location = vec3(+1 * block_size, +3 * block_size, +8 * block_size); s.location = s.ori_location; s.update(t, obstacles[stage]); }
 							}
 							else if (i == 3) printf("Game End!!\n");
 						}
@@ -921,7 +993,7 @@ bool user_init()
 	obstacles[stage].push_back(&rotate_blocks[stage][3]);
 	stage_camera_zoom[3] = 1.5f;
 
-	stage = 3;
+	stage = 0;
 
 	engine = irrklang::createIrrKlangDevice();
 	if (!engine) return false;

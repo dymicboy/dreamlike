@@ -665,16 +665,19 @@ inline void block_t::update(float t)
 		//if it finished rotating
 		else if (rotate_flag == true)
 		{
-			if (destination == rotate_center)
+			if (stage == 3)
 			{
-				destination = original_destination;
-				diff = destination - center;
-				facing_theta += PI;
-			}
-			else
-			{
-				destination = rotate_center;
-				diff = - destination + center;
+				if (destination == rotate_center)
+				{
+					destination = original_destination;
+					diff = destination - center;
+					facing_theta += PI;
+				}
+				else
+				{
+					destination = rotate_center;
+					diff = -destination + center;
+				}
 			}
 			rotate_flag = false;
 		}
