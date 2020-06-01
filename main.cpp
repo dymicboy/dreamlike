@@ -113,6 +113,7 @@ struct back_t
 // window objects
 GLFWwindow*	window = nullptr;
 ivec2		window_size = cg_default_window_size(); // initial window size
+GLFWmonitor* monitor = nullptr;
 
 //*************************************
 // OpenGL objects
@@ -450,6 +451,18 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			reset();
 			stage--;
 			goto_next_stage();
+		}
+		if (key == GLFW_KEY_F) {
+			if (monitor == nullptr)
+			{
+				monitor = glfwGetPrimaryMonitor();
+				glfwSetWindowMonitor(window, monitor, 100, 100, window_size.x, window_size.y, 1024);
+			}
+			else
+			{
+				monitor = nullptr;
+				glfwSetWindowMonitor(window, NULL, 100, 100, window_size.x, window_size.y, 1024);
+			}
 		}
 
 		if (key == GLFW_KEY_R) {
