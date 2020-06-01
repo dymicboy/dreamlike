@@ -220,13 +220,6 @@ void update()
 		lever_activate = 0;
 	}
 
-	float width_ratio = 1.0f, height_ratio = 1.0f;
-	// Calculate Ratio of Window  (Edge is Relative Value)
-	if (window_size.x > window_size.y)
-		width_ratio = float(window_size.x) / float(window_size.y);
-	else if (window_size.x < window_size.y)
-		height_ratio = float(window_size.y) / float(window_size.x);
-
 	// update projection matrix
 	cam.aspect = window_size.x/float(window_size.y);
 	//cam.projection_matrix = mat4::perspective( cam.fovy, cam.aspect, cam.dnear, cam.dfar );
@@ -240,6 +233,7 @@ void update()
 	GLint uloc;
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
+	uloc = glGetUniformLocation( program, "aspect");				if(uloc>-1) glUniform1f( uloc, cam.aspect );
 }
 
 void render()
