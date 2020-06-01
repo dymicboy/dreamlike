@@ -92,7 +92,7 @@ Texture* load_texture(const aiMaterial* ai_material, const fs::path& model_direc
 
         // release the new image
         free(pimage);
-        printf("Load [%s] complete!\n", texture_path.string().c_str());
+        printf("Loading texture [%s] complete!\n", texture_path.string().c_str());
         return texture_cache[texture_path.string()] = tex;
     }
 
@@ -141,7 +141,7 @@ Texture* load_path_texture(const std::string& path)
 
     // release the new image
     free(pimage);
-    printf("Load [%s] complete!\n", texture_path.string().c_str());
+    printf("Loading texture [%s] complete!\n", texture_path.string().c_str());
     return texture_cache[texture_path.string()] = tex;
 
 }
@@ -166,8 +166,6 @@ mesh2* load_model(const std::string& path, bool bFlipUV, int floor, float size)
         flags |= aiPostProcessSteps::aiProcess_FlipUVs;                                 // This step flips all UV coordinates along the y-axis and adjusts material settings and bitangents accordingly.
 
     Assimp::Importer importer;
-
-    printf("Loading model: %s ... ", model_path.string().c_str());
 
     // read and parse a model.
     const aiScene* ai_scene = importer.ReadFile(model_path.string(), flags);
@@ -285,8 +283,7 @@ mesh2* load_model(const std::string& path, bool bFlipUV, int floor, float size)
     // generate vertex array object, which is mandatory for OpenGL 3.3 and higher
 	new_mesh->vertex_array = cg_create_vertex_array( new_mesh->vertex_buffer, new_mesh->index_buffer );
 	if(!new_mesh->vertex_array){ printf("%s(): failed to create vertex aray\n",__func__); return nullptr; }
-
-    printf("completed!\n");
+    printf("Loading model: [%s] complete!\n", model_path.string().c_str());
 
     return new_mesh;
 }

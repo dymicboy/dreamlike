@@ -20,14 +20,14 @@ static const char*	back_music_path = "./bin/sounds/back_music.mp3";
 static const char*	cat_music_path = "./bin/sounds/cat_sound.mp3";
 static const char*	cat_fall_path = "./bin/sounds/cat_fall.mp3";
 
-static const char* picture_tex_path[5] = { 
+static const char* picture_tex_path[10] = { 
 	"",
 	"./bin/picture/1.JPG" ,
 	"./bin/picture/2.JPG" ,
 	"./bin/picture/3.JPG" ,
 	"./bin/picture/4.JPG"
 };
-Texture* picture_tex[5];
+Texture* picture_tex[10];
 GLuint	picture_vertex_array;
 
 int picture_state = 0; //if 0, no picture. 1: title page, 2: story, 3: instruction, 4: ending
@@ -220,13 +220,6 @@ void update()
 		lever_activate = 0;
 	}
 
-	float width_ratio = 1.0f, height_ratio = 1.0f;
-	// Calculate Ratio of Window  (Edge is Relative Value)
-	if (window_size.x > window_size.y)
-		width_ratio = float(window_size.x) / float(window_size.y);
-	else if (window_size.x < window_size.y)
-		height_ratio = float(window_size.y) / float(window_size.x);
-
 	// update projection matrix
 	cam.aspect = window_size.x/float(window_size.y);
 	//cam.projection_matrix = mat4::perspective( cam.fovy, cam.aspect, cam.dnear, cam.dfar );
@@ -383,15 +376,6 @@ void goto_next_stage(int addi = 0) {
 	stage_change = 1;
 	stage_change_t = 1.5f;
 	printf("stage : %d\n", next_stage);
-}
-
-void print_help()
-{
-	printf( "[help]\n" );
-	printf( "- press ESC or 'q' to terminate the program\n" );
-	printf( "- press F1 or 'h' to see help\n" );
-	printf( "- press Home to reset camera\n" );
-	printf( "\n" );
 }
 
 void reset()
@@ -580,7 +564,6 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		}
 
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
-		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
 		else if (key == GLFW_KEY_HOME)				cam = camera();
 		else if (key == GLFW_KEY_W) {
 			wire_mode = !wire_mode;
@@ -857,10 +840,10 @@ void create_picture_vertex_array()
 	indices.push_back(0); indices.push_back(1); indices.push_back(3);
 	indices.push_back(1); indices.push_back(2); indices.push_back(3);
 
-	picture_tex[0] = load_path_texture(picture_tex_path[0]);
 	picture_tex[1] = load_path_texture(picture_tex_path[1]);
 	picture_tex[2] = load_path_texture(picture_tex_path[2]);
 	picture_tex[3] = load_path_texture(picture_tex_path[3]);
+	picture_tex[4] = load_path_texture(picture_tex_path[4]);
 
 	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
 	static GLuint index_buffer = 0;		// ID holder for index buffer
@@ -1009,9 +992,7 @@ void create_sphere_vertices()
 
 bool user_init()
 {
-	// log hotkeys
-	print_help();
-
+	printf("Loading Game 'Dreamlike'.........\n");
 	// init GL states
 	glClearColor( 39/255.0f, 40/255.0f, 34/255.0f, 1.0f );	// set clear color
 	glEnable( GL_CULL_FACE );								// turn on backface culling
@@ -1115,8 +1096,8 @@ bool user_init()
 
 	//play the sound file
 	engine->play2D(back_mp3_src, true);
-	printf("playing background music");
-	printf("Game Start");
+	printf("Start playing background music\n");
+	printf("Game Start\n");
 
 	return true;
 }
