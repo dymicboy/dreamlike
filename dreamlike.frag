@@ -26,7 +26,7 @@ void main()
 	if(use_texture)
 		fragColor = texture( TEX, tc );
 	else if(use_color)
-		fragColor = color;
+		fragColor = vec4(norm, 1)*color;
 	else
 		fragColor = vec4(norm, 1);
 	if(fragColor.a < 0.001) discard;

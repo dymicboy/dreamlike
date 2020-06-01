@@ -83,6 +83,7 @@ inline void character_t::right_button(bool status) { right_arrow_button = status
 inline void character_t::spacebar_button() {
 	if (falling == 0) {
 		falling = -sqrt(jump_power / gravity);
+		falling_theta = -PI/16;
 	}
 }
 inline void character_t::interact_button() {
@@ -210,8 +211,8 @@ inline void character_t::update(float t, std::vector<std::vector<block_t>*>& obs
 	}
 	
 	if ((!onfloor) || falling < -0.01) {
-		if(falling > 0)
-			falling_theta = PI / 8;
+		
+		falling_theta = min(falling_theta+t/2, PI / 8);
 		if (floor == 0) {
 			falling += t;
 			next_location.z = location.z - (falling >= 0 ? 1 : -1) * falling * falling * gravity;

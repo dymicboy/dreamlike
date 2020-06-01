@@ -391,7 +391,7 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 						if (triger_on) break;
 					}
 					if (triger_on) {
-						printf("Trigged! Sound plz!\n");
+						printf("[stage%d trigger%d]Activated!\n",stage, i);
 						lever_activate = 1;
 						// 설명
 						// if (stage == 스테이지 && i == 트리거번호) 동작 : for (auto& s : rotate_blocks[stage][0]) s.block_rotation(PI / 2);
@@ -768,7 +768,6 @@ void create_trigger_vertex_array()
 	trigger_vertex_array[0][2] = cg_create_vertex_array(vertex_buffer, index_buffer);
 
 }
-
 void create_sphere_vertices()
 {
 
@@ -777,20 +776,20 @@ void create_sphere_vertices()
 
 	//create bottom
 	for (int i = 0; i < 20; i++) {
-		vertices.push_back({ vec3(0,0,-1), vec3(0,0,-1.0f), vec2(float(i) / 20, 0) });
+		vertices.push_back({ vec3(0,0,-1), vec3(1,1,1), vec2(float(i) / 20, 0) });
 	}
 
 	for (int i = 0; i < 20; i++) {
 		float t = PI * i / float(20), c = cos(t), s = sin(t);
 		for (int j = 0; j < 20; j++) {
 			float p = PI * 2.0f * j / float(20), pc = cos(p), ps = sin(p);
-			vertices.push_back({ vec3(pc * s,ps * s,-c), vec3(0,0,-1.0f), vec2(float(j) / 20,float(i) / 20) });
+			vertices.push_back({ vec3(pc * s,ps * s,-c), vec3(1,1,1), vec2(float(j) / 20,float(i) / 20) });
 		}
 	}
 	//create top
 	for (int i = 0; i < 20; i++) {
 		float t = PI * i / float(100), c = cos(t), s = sin(t);
-		vertices.push_back({ vec3(0,0,1), vec3(0,0,-1.0f), vec2(float(i) / 100, 1) });
+		vertices.push_back({ vec3(0,0,1), vec3(1,1,1), vec2(float(i) / 100, 1) });
 	}
 
 	//create indices
