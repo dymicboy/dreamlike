@@ -426,9 +426,18 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 							{
 								for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
 							}
-							else if (i == 1) for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
-							else if (i == 2) for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
-							else if (i == 3) for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
+							else if (i == 1)
+							{
+								for (auto& s : rotate_blocks[stage][i - 1]) s.block_rotation(PI / 2);
+								for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
+							}
+							else if (i == 2)
+							{
+								for (auto& s : rotate_blocks[stage][i - 1]) s.block_rotation(PI / 2);
+								for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
+								for (auto& s : characters[stage]) { s.location = vec3(+1 * block_size, +2 * block_size, +8 * block_size); s.update(t, obstacles[stage]); }
+							}
+							else if (i == 3) printf("Game End!!\n");
 						}
 						break;
 					}
