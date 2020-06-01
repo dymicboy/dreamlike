@@ -233,6 +233,7 @@ void update()
 	GLint uloc;
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
+	uloc = glGetUniformLocation( program, "aspect");				if(uloc>-1) glUniform1f( uloc, cam.aspect );
 }
 
 void render()

@@ -8,6 +8,7 @@ uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
 uniform bool screen;
+uniform float aspect;
 
 out vec4 epos;
 out vec3 norm;
@@ -16,7 +17,7 @@ out vec2 tc;
 void main()
 {
 	if(screen){
-		gl_Position = vec4(position,1);
+		gl_Position = vec4(position.x / aspect, position.y, position.z ,1);
 	}
 	else{
 		vec4 wpos = model_matrix * vec4(position,1);
