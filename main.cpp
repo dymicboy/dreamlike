@@ -121,7 +121,8 @@ struct back_t
 //*************************************
 // window objects
 GLFWwindow*	window = nullptr;
-ivec2		window_size = cg_default_window_size(); // initial window size
+ivec2		initial_size = ivec2(1280, 720);
+ivec2		window_size = initial_size; // initial window size
 GLFWmonitor* monitor = nullptr;
 
 //*************************************
@@ -173,7 +174,6 @@ void update()
 	if (current_frame_time) {
 		current_frame_time = float(glfwGetTime());
 		t = current_frame_time - last_frame_time;
-		if (t > 0.005f) t = 0.005f;
 		last_frame_time = current_frame_time;
 	}
 	else {
@@ -246,6 +246,37 @@ void render()
 	glUseProgram(program);
 
 	if (picture_state != 0) {
+		float aspect = window_size.x * float(initial_size.y) / float(window_size.y) / float(initial_size.x);
+		float multix, multiy;
+		if (initial_size.x > initial_size.y) {
+			multix = 1.0f;
+			multiy = float(initial_size.x) / float(initial_size.y);
+		}
+		else {
+			multix = float(initial_size.y) / float(initial_size.x);
+			multiy = 1.0f;
+		}
+		mat4 aspect_matrix =
+		{
+			min(1 / aspect,1.0f) * multix, 0, 0, 0,
+			0, min(aspect,1.0f) * multiy, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1
+		};
+
+		mat4 scale_matrix =
+		{
+			1, 0, 0, 0,
+			0, 720.0f/1280.0f, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1
+		};
+
+		aspect_matrix = aspect_matrix * scale_matrix;
+
+		// update common uniform variables in vertex/fragment shaders
+		GLint uloc;
+		uloc = glGetUniformLocation(program, "aspect_matrix");	if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, aspect_matrix);
 		glUniform1i(glGetUniformLocation(program, "screen"), true );
 		glBindVertexArray(picture_vertex_array);
 		glBindTexture(GL_TEXTURE_2D, picture_tex[picture_state]->id);
@@ -556,7 +587,11 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 								for (auto& s : rotate_blocks[stage][i]) s.block_rotation(PI / 2);
 								for (auto& s : characters[stage]) { s.ori_location = vec3(+1 * block_size, +3 * block_size, +8 * block_size); s.location = s.ori_location; s.update(t, obstacles[stage]); }
 							}
-							else if (i == 3) picture_state = 4;
+							else if (i == 3) {
+								picture_state = 4;
+								lever_activate = 0;
+								cat_jump = 0;
+							}
 						}
 						break;
 					}
@@ -995,7 +1030,7 @@ bool user_init()
 {
 	printf("Loading Game 'Dreamlike'.........\n");
 	// init GL states
-	glClearColor( 39/255.0f, 40/255.0f, 34/255.0f, 1.0f );	// set clear color
+	glClearColor( 0,0,0,1.0f );	// set clear color
 	glEnable( GL_CULL_FACE );								// turn on backface culling
 	glEnable( GL_DEPTH_TEST );								// turn on depth tests
 	glEnable(GL_TEXTURE_2D);
@@ -1092,8 +1127,8 @@ bool user_init()
 
 	//set default volume
 	back_mp3_src->setDefaultVolume(0.7f);
-	cat_mp3_src->setDefaultVolume(0.3f);
-	cat_fall_src->setDefaultVolume(0.3f);
+	cat_mp3_src->setDefaultVolume(0.1f);
+	cat_fall_src->setDefaultVolume(0.1f);
 
 	//play the sound file
 	engine->play2D(back_mp3_src, true);

@@ -7,6 +7,7 @@ layout(location=2) in vec2 texcoord;
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
+uniform mat4 aspect_matrix;
 uniform bool screen;
 uniform float aspect;
 
@@ -17,7 +18,7 @@ out vec2 tc;
 void main()
 {
 	if(screen){
-		gl_Position = vec4(position.x / aspect, position.y, position.z ,1);
+		gl_Position = aspect_matrix*vec4(position,1);
 	}
 	else{
 		vec4 wpos = model_matrix * vec4(position,1);
